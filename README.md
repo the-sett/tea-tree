@@ -2,7 +2,7 @@
 
 The 'tea-tree' data structure is a rose-tree implementation with some additional features that help when working with the Elm update cycle.
 
-In TEA update messages should contain only enough information to perform a 'delta' on the Model to derive a new Model. State from the model itself should not be captured, as it may get stale. Updates are asynchronous, so it is possible to have >1 Cmd in flight at the same time, which are derived from the same version of the Model.
+In TEA update messages should contain only enough information to perform a 'delta' on the Model to derive a new Model. The model itself, or larger chunks of state from it, should not be captured as they may get stale. Updates are asynchronous, so it is possible to have >1 Cmd in flight at the same time, which are derived from the same version of the Model.
 
 Every node in the tree is assigned a unique id.
 
