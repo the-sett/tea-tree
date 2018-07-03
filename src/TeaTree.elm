@@ -6,6 +6,7 @@ module TeaTree
           -- Tree operations
         , singleton
         , zipper
+        , toTree
         , map
           -- Zipper operations
         , goToChild
@@ -157,8 +158,8 @@ zipper (Tree tree) =
 
 
 {-| -}
-treeAtZipper : Zipper a -> Tree a
-treeAtZipper (Zipper zipper) =
+toTree : Zipper a -> Tree a
+toTree (Zipper zipper) =
     Tree
         { nextId = zipper.nextId
         , innerTree = zipper.innerTree
@@ -598,6 +599,6 @@ updateDatum path fn tree =
     goToPath path tree
         |> Maybe.map (updateFocusDatum fn)
         |> Maybe.map goToRoot
-        |> Maybe.map treeAtZipper
+        |> Maybe.map toTree
         -- Silent fail if the path is wrong.
         |> Maybe.withDefault tree

@@ -17,3 +17,15 @@ type Model
 type Msg
     = TextToSVGMsg TextToSVG.Msg
     | ClickElement String
+
+
+type alias Example =
+    { label : String
+    , size : Float
+    }
+
+
+example : Tree Example
+example =
+    TeaTree.singleton
+        |> TeaTree.toTree

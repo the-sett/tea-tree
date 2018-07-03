@@ -7,7 +7,7 @@
     ".",
     "../src/"
   ],
-  "exposed-modules": ["TeaTree"],
+  "exposed-modules": [],
   "native-modules": false,
   "dependencies": {
     "elm-lang/core": "5.0.0 <= v < 6.0.0",
