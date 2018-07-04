@@ -6,7 +6,7 @@ import Ease
 import Geometry.Svg
 import Http
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
-import TeaTree
+import TeaTree exposing (Tree)
 import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
 
 
@@ -28,5 +28,5 @@ type alias Example =
 
 example : Tree Example
 example =
-    TeaTree.singleton
+    TeaTree.singleton { label = "", size = 0.0 }
         |> TeaTree.toTree
