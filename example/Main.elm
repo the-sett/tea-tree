@@ -11,7 +11,8 @@ import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRender
 
 
 type Model
-    = SizingText
+    = LoadingModel
+    | SizingText
     | Ready
 
 
