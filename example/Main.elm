@@ -4,6 +4,7 @@ import AnimationFrame
 import Arc2d
 import Ease
 import Geometry.Svg
+import Http
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
 import TeaTree
 import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
