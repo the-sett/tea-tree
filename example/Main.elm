@@ -5,11 +5,21 @@ import Arc2d
 import Color exposing (Color)
 import Ease
 import Geometry.Svg
+import Html exposing (Html)
 import Http
 import Json.Decode
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
 import TeaTree exposing (Tree)
 import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
+
+
+main =
+    Html.program
+        { init = init
+        , subscriptions = subscriptions
+        , update = update
+        , view = view
+        }
 
 
 type Model
@@ -32,6 +42,26 @@ type alias Wedge =
     , outerRadius : Float
     , color : Color
     }
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( LoadingModel, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+
+
+view : Model -> Html Msg
+view model =
+    Html.text "hello"
 
 
 
