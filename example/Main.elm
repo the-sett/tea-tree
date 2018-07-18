@@ -8,10 +8,11 @@ import Geometry.Svg
 import Html exposing (Html)
 import Http
 import LineSegment2d exposing (LineSegment2d)
-import Json.Decode
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Extra exposing ((|:), withDefault)
 import Point2d exposing (Point2d)
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
-import Task exposing (perform)
+import Task exposing (perform, Task)
 import TeaTree exposing (Tree)
 import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
 import TypedSvg exposing (svg, g, circle, rect, text_, tspan, line, path)
@@ -37,8 +38,13 @@ main =
 type Model
     = LoadingModel
     | SizingText
-    | SizingWindow
+    | SizingWindow SizingWindowModel
     | Ready ReadyModel
+
+
+type alias SizingWindowModel =
+    { tree : Tree Wedge
+    }
 
 
 type alias ReadyModel =
@@ -48,7 +54,8 @@ type alias ReadyModel =
 
 
 type Msg
-    = TextToSVGMsg TextToSVG.Msg
+    = LoadResult (Result Http.Error (Tree Wedge))
+    | TextToSVGMsg TextToSVG.Msg
     | WindowSize Window.Size
     | ClickElement String
 
@@ -66,8 +73,8 @@ type alias Wedge =
 
 init : ( Model, Cmd Msg )
 init =
-    ( SizingWindow
-    , Task.perform WindowSize Window.size
+    ( LoadingModel
+    , Task.attempt LoadResult fetchExample
     )
 
 
@@ -83,8 +90,22 @@ noop model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( _, WindowSize windowSize ) ->
-            noop (Ready { frame = windowSizeToFrame windowSize, tree = example })
+        ( LoadingModel, LoadResult result ) ->
+            let
+                _ =
+                    Debug.log "result" result
+            in
+                case result of
+                    Err _ ->
+                        noop model
+
+                    Ok tree ->
+                        ( SizingWindow { tree = tree }
+                        , Task.perform WindowSize Window.size
+                        )
+
+        ( SizingWindow sizingWindowModel, WindowSize windowSize ) ->
+            noop (Ready { frame = windowSizeToFrame windowSize, tree = sizingWindowModel.tree })
 
         ( _, _ ) ->
             noop model
@@ -223,8 +244,54 @@ printGray =
 
 
 -- REST Calls
---fetchExample : Task
+
+
+fetchExample : Task Http.Error (Tree Wedge)
+fetchExample =
+    Http.get "/flare.json" (Decode.map flareToWedgeTree flareDecoder)
+        |> Http.toTask
+
+
+
 --decoder : Decoder (Tree Wedge)
+
+
+type Flare
+    = Flare { name : String, children : List Flare, size : Maybe Int }
+
+
+flareDecoder : Decoder Flare
+flareDecoder =
+    (Decode.succeed
+        (\name children size ->
+            Flare
+                { name = name
+                , children = children
+                , size = size
+                }
+        )
+    )
+        |: Decode.field "name" Decode.string
+        |: Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder)))))
+        |: Decode.maybe (Decode.field "size" Decode.int)
+
+
+maybeEmptyList : Maybe (List a) -> List a
+maybeEmptyList maybeList =
+    case maybeList of
+        Nothing ->
+            []
+
+        Just xs ->
+            xs
+
+
+flareToWedgeTree : Flare -> Tree Wedge
+flareToWedgeTree flare =
+    example
+
+
+
 -- Example Data
 
 
