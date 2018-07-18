@@ -6,6 +6,7 @@ module Utils.GridMetrics
         , Position
         , Frame
         , rectToFrame
+        , middle
         , grid
         , rhythm
         , fontSizePx
@@ -46,6 +47,13 @@ rectToFrame rect =
     , w = rect.w
     , h = rect.h
     , aspectRatio = rect.h / rect.w
+    }
+
+
+middle : Sized (Positioned a) -> Position
+middle rect =
+    { x = (rect.x + rect.w) / 2
+    , y = (rect.y + rect.h) / 2
     }
 
 
