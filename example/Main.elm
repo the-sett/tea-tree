@@ -151,15 +151,7 @@ wheel frame tree =
         center =
             middle frame |> (\c -> Point2d.fromCoordinates ( c.x, c.y ))
     in
-        wedge center
-            { label = "test"
-            , size = 100
-            , startAngle = 0
-            , endAngle = pi / 3
-            , innerRadius = 100
-            , outerRadius = 150
-            , color = black
-            }
+        wedge center ((TeaTree.zipper >> TeaTree.datum) tree)
 
 
 wedge : Point2d -> Wedge -> Svg msg
@@ -248,12 +240,13 @@ printGray =
 
 fetchExample : Task Http.Error (Tree Wedge)
 fetchExample =
-    Http.get "/flare.json" (Decode.map flareToWedgeTree flareDecoder)
+    Http.get "/flare.json" treeDecoder
         |> Http.toTask
 
 
-
---decoder : Decoder (Tree Wedge)
+treeDecoder : Decoder (Tree Wedge)
+treeDecoder =
+    (Decode.map flareToWedgeTree flareDecoder)
 
 
 type Flare
@@ -287,23 +280,36 @@ maybeEmptyList maybeList =
 
 
 flareToWedgeTree : Flare -> Tree Wedge
-flareToWedgeTree flare =
-    example
+flareToWedgeTree (Flare flare) =
+    let
+        makeNode flare =
+            { label = flare.name
+            , size = 0.0
+            , startAngle = 0.0
+            , endAngle = 0.0
+            , innerRadius = 0.0
+            , outerRadius = 0.0
+            , color = black
+            }
 
+        addChildren flares zipper =
+            case flares of
+                [] ->
+                    zipper
 
+                (Flare f) :: fs ->
+                    addChild f (addChildren fs zipper)
 
--- Example Data
+        addChild flare zipper =
+            TeaTree.insertChild (makeNode flare) zipper
+                |> TeaTree.goToChild 0
+                |> Maybe.withDefault zipper
+                |> addChildren flare.children
+                |> TeaTree.goUp
+                |> Maybe.withDefault zipper
 
-
-example : Tree Wedge
-example =
-    TeaTree.singleton
-        { label = "test"
-        , size = 0.0
-        , startAngle = 0.0
-        , endAngle = pi
-        , innerRadius = 50.0
-        , outerRadius = 100.0
-        , color = Color.rgb 0 0 0
-        }
-        |> TeaTree.toTree
+        walk flare =
+            addChildren flare.children (TeaTree.singleton (makeNode flare))
+    in
+        walk flare
+            |> TeaTree.toTree
