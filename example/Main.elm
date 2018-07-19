@@ -13,7 +13,7 @@ import Json.Decode.Extra exposing ((|:), withDefault)
 import Point2d exposing (Point2d)
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
 import Task exposing (perform, Task)
-import TeaTree exposing (Tree)
+import TeaTree exposing (Tree, Zipper)
 import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
 import TypedSvg exposing (svg, g, circle, rect, text_, tspan, line, path)
 import TypedSvg.Attributes.InPx exposing (cx, cy, r, strokeWidth, x, y, x1, y1, x2, y2, rx, ry, width, height, fontSize)
@@ -284,7 +284,7 @@ flareToWedgeTree (Flare flare) =
     let
         makeNode flare =
             { label = flare.name
-            , size = 0.0
+            , size = flare.size |> Maybe.map toFloat |> Maybe.withDefault 0.0
             , startAngle = 0.0
             , endAngle = 0.0
             , innerRadius = 0.0
@@ -292,24 +292,51 @@ flareToWedgeTree (Flare flare) =
             , color = black
             }
 
+        --addChildren : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChildren flares zipper =
             case flares of
                 [] ->
-                    zipper
+                    ( zipper, TeaTree.datum zipper |> .size )
 
                 (Flare f) :: fs ->
-                    addChild f (addChildren fs zipper)
+                    let
+                        ( fsZipper, fsSize ) =
+                            (addChildren fs zipper)
 
+                        ( fZipper, fSize ) =
+                            addChild f fsZipper
+                    in
+                        ( fZipper, fSize + fsSize )
+
+        --addChild : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChild flare zipper =
-            TeaTree.insertChild (makeNode flare) zipper
-                |> TeaTree.goToChild 0
-                |> Maybe.withDefault zipper
-                |> addChildren flare.children
-                |> TeaTree.goUp
-                |> Maybe.withDefault zipper
+            let
+                node =
+                    (makeNode flare)
 
+                emptyChild =
+                    TeaTree.insertChild node zipper
+                        |> TeaTree.goToChild 0
+                        |> Maybe.withDefault zipper
+
+                ( completeChild, childSize ) =
+                    emptyChild
+                        |> addChildren flare.children
+            in
+                ( completeChild
+                    |> TeaTree.goUp
+                    |> Maybe.withDefault zipper
+                    |> TeaTree.updateFocusDatum (\wedge -> { wedge | size = childSize })
+                , childSize
+                )
+
+        --walk : Flare -> Zipper Wedge
         walk flare =
-            addChildren flare.children (TeaTree.singleton (makeNode flare))
+            let
+                ( zipper, size ) =
+                    addChildren flare.children (TeaTree.singleton (makeNode flare))
+            in
+                zipper |> TeaTree.goToRoot
     in
         walk flare
             |> TeaTree.toTree
