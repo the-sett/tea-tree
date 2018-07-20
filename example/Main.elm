@@ -294,6 +294,11 @@ flareToWedgeTree (Flare flare) =
 
         --addChildren : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChildren flares zipper =
+            -- _ =
+            --     Debug.log "addChildren - flares" flares
+            --
+            -- _ =
+            --     Debug.log "addChildren - zipper" zipper
             case flares of
                 [] ->
                     ( zipper, TeaTree.datum zipper |> .size )
@@ -310,23 +315,34 @@ flareToWedgeTree (Flare flare) =
 
         --addChild : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChild flare zipper =
+            -- _ =
+            --     Debug.log "addChild - flare" flare
+            --
+            -- _ =
+            --     Debug.log "addChild - zipper" zipper
             let
                 node =
                     (makeNode flare)
 
                 emptyChild =
                     TeaTree.insertChild node zipper
+                        --|> Debug.log "with insertChild"
                         |> TeaTree.goToChild 0
+                        --|> Debug.log "with goToChild"
                         |> Maybe.withDefault zipper
 
                 ( completeChild, childSize ) =
                     emptyChild
                         |> addChildren flare.children
+
+                --|> Debug.log "with addChildren"
             in
                 ( completeChild
                     |> TeaTree.goUp
+                    --|> Debug.log "with goUp"
                     |> Maybe.withDefault zipper
                     |> TeaTree.updateFocusDatum (\wedge -> { wedge | size = childSize })
+                  --|> Debug.log "with updateFocusDatum"
                 , childSize
                 )
 

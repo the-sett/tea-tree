@@ -294,8 +294,8 @@ goToChild n (Zipper zipper) =
                                         Path innerFocus.id (n :: ps)
                             , innerTree = focus
                             , crumbs =
-                                { id = innerFocus.id
-                                , datum = innerFocus.datum
+                                { id = inner.id
+                                , datum = inner.datum
                                 , before = before
                                 , after = after
                                 }
