@@ -292,6 +292,9 @@ flareToWedgeTree (Flare flare) =
             , color = black
             }
 
+        setWedgeSize size wedge =
+            { wedge | size = size }
+
         --addChildren : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChildren flares zipper =
             -- _ =
@@ -310,8 +313,11 @@ flareToWedgeTree (Flare flare) =
 
                         ( fZipper, fSize ) =
                             addChild f fsZipper
+
+                        totalSize =
+                            fSize + fsSize
                     in
-                        ( fZipper, fSize + fsSize )
+                        ( fZipper |> TeaTree.updateFocusDatum (setWedgeSize totalSize), totalSize )
 
         --addChild : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChild flare zipper =
@@ -341,7 +347,7 @@ flareToWedgeTree (Flare flare) =
                     |> TeaTree.goUp
                     --|> Debug.log "with goUp"
                     |> Maybe.withDefault zipper
-                    |> TeaTree.updateFocusDatum (\wedge -> { wedge | size = childSize })
+                    |> TeaTree.updateFocusDatum (setWedgeSize (node.size + childSize))
                   --|> Debug.log "with updateFocusDatum"
                 , childSize
                 )
