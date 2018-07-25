@@ -279,6 +279,49 @@ maybeEmptyList maybeList =
             xs
 
 
+goToNextWithTrail : (b -> b) -> b -> List b -> Zipper a -> Maybe ( Zipper a, List b )
+goToNextWithTrail rightFn context trail zipper =
+    let
+        upAndOver context trail zipper =
+            case ( TeaTree.goUp zipper, trail ) of
+                ( Nothing, _ ) ->
+                    Nothing
+
+                ( Just upZipper, ctxt :: ctxts ) ->
+                    case TeaTree.goRight upZipper of
+                        Nothing ->
+                            upAndOver ctxt ctxts upZipper
+
+                        Just rightZipper ->
+                            Just ( rightZipper, (rightFn ctxt) :: ctxts )
+
+                ( Just _, [] ) ->
+                    -- Corrupted trail, this should not happen but can.
+                    Nothing
+    in
+        case TeaTree.goToChild 0 zipper of
+            Just childZipper ->
+                Just ( childZipper, context :: trail )
+
+            Nothing ->
+                case TeaTree.goRight zipper of
+                    Just rightZipper ->
+                        Just ( rightZipper, trail )
+
+                    Nothing ->
+                        case upAndOver context trail zipper of
+                            Nothing ->
+                                Nothing
+
+                            upAndOverZipperAndTrail ->
+                                upAndOverZipperAndTrail
+
+
+initLayout : Tree Wedge -> Tree Wedge
+initLayout tree =
+    tree
+
+
 flareToWedgeTree : Flare -> Tree Wedge
 flareToWedgeTree (Flare flare) =
     let
