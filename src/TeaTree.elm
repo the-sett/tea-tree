@@ -132,7 +132,7 @@ getNextId id =
 singleton : a -> Zipper a
 singleton datum =
     Tree
-        { nextId = 0
+        { nextId = 1
         , innerTree =
             InnerTree
                 { id = 0
