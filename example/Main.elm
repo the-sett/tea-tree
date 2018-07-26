@@ -135,11 +135,14 @@ printTree tree =
     let
         printWedge wedge =
             Html.div []
-                [ Html.text "Depth : "
+                [ Html.text "Label : "
+                , Html.text wedge.label
+                , Html.br [] []
+                , Html.text "Depth : "
                 , Html.text <| toString wedge.depth
                 , Html.br [] []
-                , Html.text "Label : "
-                , Html.text wedge.label
+                , Html.text "Fraction : "
+                , Html.text <| toString wedge.fraction
                 , Html.br [] []
                 , Html.text "Size : "
                 , Html.text <| toString wedge.size
@@ -339,16 +342,26 @@ initLayout tree =
         size =
             TeaTree.zipper tree |> TeaTree.datum |> .size
 
-        initFn fraction zipper =
+        layoutWedge accum fraction wedge =
+            { wedge
+                | fraction = fraction
+                , startAngle = accum
+                , endAngle = accum + fraction
+            }
+
+        initFn accum zipper =
             case TeaTree.goToNext zipper of
                 Just stepZipper ->
                     let
                         wedge =
                             TeaTree.datum stepZipper
+
+                        fraction =
+                            wedge.size / size
                     in
                         stepZipper
-                            |> TeaTree.updateFocusDatum identity
-                            |> initFn fraction
+                            |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
+                            |> initFn (fraction + accum)
 
                 Nothing ->
                     zipper
