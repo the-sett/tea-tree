@@ -159,10 +159,7 @@ printTree tree =
                 , Html.br [] []
                 ]
 
-        size =
-            TeaTree.zipper tree |> TeaTree.datum |> .size
-
-        printFn angle zipper =
+        printFn zipper =
             case TeaTree.goToNext zipper of
                 Just stepZipper ->
                     let
@@ -170,13 +167,18 @@ printTree tree =
                             TeaTree.datum stepZipper
                     in
                         (printWedge wedge)
-                            :: printFn angle stepZipper
+                            :: printFn stepZipper
 
                 Nothing ->
                     []
+
+        startZipper =
+            TeaTree.zipper tree
     in
         Html.div []
-            (printFn 0 (TeaTree.zipper tree))
+            ((printWedge <| TeaTree.datum startZipper)
+                :: (printFn startZipper)
+            )
 
 
 diagram : { frame : Frame, tree : Tree Wedge } -> Html Msg
@@ -298,7 +300,7 @@ fetchExample =
 
 treeDecoder : Decoder (Tree Wedge)
 treeDecoder =
-    (Decode.map flareToWedgeTree flareDecoder)
+    (Decode.map (flareToWedgeTree >> initLayout) flareDecoder)
 
 
 type Flare
@@ -331,55 +333,29 @@ maybeEmptyList maybeList =
             xs
 
 
-goToNextWithTrail : (b -> b) -> (a -> b) -> List b -> Zipper a -> Maybe ( Zipper a, List b )
-goToNextWithTrail rightFn downFn trail zipper =
-    let
-        upAndOver trail zipper =
-            case ( TeaTree.goUp zipper, trail ) of
-                ( Nothing, _ ) ->
-                    Nothing
-
-                ( Just upZipper, _ :: ts ) ->
-                    case ( TeaTree.goRight upZipper, ts ) of
-                        ( Nothing, _ ) ->
-                            upAndOver ts upZipper
-
-                        ( Just rightZipper, rt :: rts ) ->
-                            Just ( rightZipper, (rightFn rt) :: rts )
-
-                        ( Just _, [] ) ->
-                            -- Corrupted trail, this should not happen but can.
-                            Nothing
-
-                ( Just _, [] ) ->
-                    -- Corrupted trail, this should not happen but can.
-                    Nothing
-    in
-        case TeaTree.goToChild 0 zipper of
-            Just childZipper ->
-                Just ( childZipper, (downFn <| TeaTree.datum childZipper) :: trail )
-
-            Nothing ->
-                case ( TeaTree.goRight zipper, trail ) of
-                    ( Just rightZipper, t :: ts ) ->
-                        Just ( rightZipper, (rightFn t) :: ts )
-
-                    ( Nothing, upTrail ) ->
-                        case upAndOver upTrail zipper of
-                            Nothing ->
-                                Nothing
-
-                            upAndOverZipperAndTrail ->
-                                upAndOverZipperAndTrail
-
-                    ( Just _, [] ) ->
-                        -- Corrupted trail, this should not happen but can.
-                        Nothing
-
-
 initLayout : Tree Wedge -> Tree Wedge
 initLayout tree =
-    tree
+    let
+        size =
+            TeaTree.zipper tree |> TeaTree.datum |> .size
+
+        initFn fraction zipper =
+            case TeaTree.goToNext zipper of
+                Just stepZipper ->
+                    let
+                        wedge =
+                            TeaTree.datum stepZipper
+                    in
+                        stepZipper
+                            |> TeaTree.updateFocusDatum identity
+                            |> initFn fraction
+
+                Nothing ->
+                    zipper
+    in
+        initFn 0 (TeaTree.zipper tree)
+            |> TeaTree.goToRoot
+            |> TeaTree.toTree
 
 
 flareToWedgeTree : Flare -> Tree Wedge
