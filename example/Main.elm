@@ -63,6 +63,8 @@ type Msg
 type alias Wedge =
     { label : String
     , size : Float
+    , fraction : Float
+    , depth : Int
     , startAngle : Float
     , endAngle : Float
     , innerRadius : Float
@@ -134,7 +136,7 @@ printTree tree =
         printWedge wedge =
             Html.div []
                 [ Html.text "Depth : "
-                , Html.text <| toString 0
+                , Html.text <| toString wedge.depth
                 , Html.br [] []
                 , Html.text "Label : "
                 , Html.text wedge.label
@@ -383,9 +385,11 @@ initLayout tree =
 flareToWedgeTree : Flare -> Tree Wedge
 flareToWedgeTree (Flare flare) =
     let
-        makeNode flare =
+        makeNode depth flare =
             { label = flare.name
             , size = flare.size |> Maybe.map toFloat |> Maybe.withDefault 0.0
+            , fraction = 0.0
+            , depth = depth
             , startAngle = 0.0
             , endAngle = 0.0
             , innerRadius = 0.0
@@ -397,7 +401,7 @@ flareToWedgeTree (Flare flare) =
             { wedge | size = size }
 
         --addChildren : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
-        addChildren flares zipper =
+        addChildren depth flares zipper =
             -- _ =
             --     Debug.log "addChildren - flares" flares
             --
@@ -410,10 +414,10 @@ flareToWedgeTree (Flare flare) =
                 (Flare f) :: fs ->
                     let
                         ( fsZipper, fsSize ) =
-                            (addChildren fs zipper)
+                            (addChildren depth fs zipper)
 
                         ( fZipper, fSize ) =
-                            addChild f fsZipper
+                            addChild depth f fsZipper
 
                         totalSize =
                             fSize + fsSize
@@ -421,7 +425,7 @@ flareToWedgeTree (Flare flare) =
                         ( fZipper |> TeaTree.updateFocusDatum (setWedgeSize totalSize), totalSize )
 
         --addChild : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
-        addChild flare zipper =
+        addChild depth flare zipper =
             -- _ =
             --     Debug.log "addChild - flare" flare
             --
@@ -429,7 +433,7 @@ flareToWedgeTree (Flare flare) =
             --     Debug.log "addChild - zipper" zipper
             let
                 node =
-                    (makeNode flare)
+                    (makeNode (depth + 1) flare)
 
                 emptyChild =
                     TeaTree.insertChild node zipper
@@ -440,7 +444,7 @@ flareToWedgeTree (Flare flare) =
 
                 ( completeChild, childSize ) =
                     emptyChild
-                        |> addChildren flare.children
+                        |> addChildren (depth + 1) flare.children
 
                 --|> Debug.log "with addChildren"
             in
@@ -457,7 +461,7 @@ flareToWedgeTree (Flare flare) =
         walk flare =
             let
                 ( zipper, size ) =
-                    addChildren flare.children (TeaTree.singleton (makeNode flare))
+                    addChildren 0 flare.children (TeaTree.singleton (makeNode 0 flare))
             in
                 zipper |> TeaTree.goToRoot
     in
