@@ -121,10 +121,60 @@ view : Model -> Html Msg
 view model =
     case model of
         Ready ready ->
-            diagram ready
+            --diagram ready
+            printTree ready.tree
 
         _ ->
             Html.div [] []
+
+
+printTree : Tree Wedge -> Html msg
+printTree tree =
+    let
+        printWedge wedge =
+            Html.div []
+                [ Html.text "Depth : "
+                , Html.text <| toString 0
+                , Html.br [] []
+                , Html.text "Label : "
+                , Html.text wedge.label
+                , Html.br [] []
+                , Html.text "Size : "
+                , Html.text <| toString wedge.size
+                , Html.br [] []
+                , Html.text "Start Angle : "
+                , Html.text <| toString wedge.startAngle
+                , Html.br [] []
+                , Html.text "End Angle : "
+                , Html.text <| toString wedge.endAngle
+                , Html.br [] []
+                , Html.text "Inner Radius : "
+                , Html.text <| toString wedge.innerRadius
+                , Html.br [] []
+                , Html.text "Outer Radius : "
+                , Html.text <| toString wedge.outerRadius
+                , Html.br [] []
+                , Html.br [] []
+                ]
+
+        size =
+            TeaTree.zipper tree |> TeaTree.datum |> .size
+
+        printFn angle zipper =
+            case TeaTree.goToNext zipper of
+                Just stepZipper ->
+                    let
+                        wedge =
+                            TeaTree.datum stepZipper
+                    in
+                        (printWedge wedge)
+                            :: printFn angle stepZipper
+
+                Nothing ->
+                    []
+    in
+        Html.div []
+            (printFn 0 (TeaTree.zipper tree))
 
 
 diagram : { frame : Frame, tree : Tree Wedge } -> Html Msg
@@ -279,21 +329,25 @@ maybeEmptyList maybeList =
             xs
 
 
-goToNextWithTrail : (b -> b) -> b -> List b -> Zipper a -> Maybe ( Zipper a, List b )
-goToNextWithTrail rightFn context trail zipper =
+goToNextWithTrail : (b -> b) -> (a -> b) -> List b -> Zipper a -> Maybe ( Zipper a, List b )
+goToNextWithTrail rightFn downFn trail zipper =
     let
-        upAndOver context trail zipper =
+        upAndOver trail zipper =
             case ( TeaTree.goUp zipper, trail ) of
                 ( Nothing, _ ) ->
                     Nothing
 
-                ( Just upZipper, ctxt :: ctxts ) ->
-                    case TeaTree.goRight upZipper of
-                        Nothing ->
-                            upAndOver ctxt ctxts upZipper
+                ( Just upZipper, _ :: ts ) ->
+                    case ( TeaTree.goRight upZipper, ts ) of
+                        ( Nothing, _ ) ->
+                            upAndOver ts upZipper
 
-                        Just rightZipper ->
-                            Just ( rightZipper, (rightFn ctxt) :: ctxts )
+                        ( Just rightZipper, rt :: rts ) ->
+                            Just ( rightZipper, (rightFn rt) :: rts )
+
+                        ( Just _, [] ) ->
+                            -- Corrupted trail, this should not happen but can.
+                            Nothing
 
                 ( Just _, [] ) ->
                     -- Corrupted trail, this should not happen but can.
@@ -301,20 +355,24 @@ goToNextWithTrail rightFn context trail zipper =
     in
         case TeaTree.goToChild 0 zipper of
             Just childZipper ->
-                Just ( childZipper, context :: trail )
+                Just ( childZipper, (downFn <| TeaTree.datum childZipper) :: trail )
 
             Nothing ->
-                case TeaTree.goRight zipper of
-                    Just rightZipper ->
-                        Just ( rightZipper, trail )
+                case ( TeaTree.goRight zipper, trail ) of
+                    ( Just rightZipper, t :: ts ) ->
+                        Just ( rightZipper, (rightFn t) :: ts )
 
-                    Nothing ->
-                        case upAndOver context trail zipper of
+                    ( Nothing, upTrail ) ->
+                        case upAndOver upTrail zipper of
                             Nothing ->
                                 Nothing
 
                             upAndOverZipperAndTrail ->
                                 upAndOverZipperAndTrail
+
+                    ( Just _, [] ) ->
+                        -- Corrupted trail, this should not happen but can.
+                        Nothing
 
 
 initLayout : Tree Wedge -> Tree Wedge
