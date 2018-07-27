@@ -71,22 +71,38 @@ curve2d attributes curve =
         convertSegment segment =
             case segment of
                 ArcSegment arc ->
+                    -- Segment.LineSegment (Arc2d.startPoint arc |> pointToVec)
+                    --     (Arc2d.endPoint arc |> pointToVec)
                     Segment.Arc
                         { arcFlag = LowLevel.Command.smallestArc
                         , direction = LowLevel.Command.clockwise
                         , start = Arc2d.startPoint arc |> pointToVec
                         , end = Arc2d.endPoint arc |> pointToVec
-                        , radii = ( 50.0, 50.0 )
-                        , xAxisRotate = Arc2d.sweptAngle arc
+                        , radii = ( Arc2d.radius arc, Arc2d.radius arc )
+                        , xAxisRotate = 0.0
                         }
 
                 LineSegment line ->
                     Segment.LineSegment (LineSegment2d.startPoint line |> pointToVec)
                         (LineSegment2d.endPoint line |> pointToVec)
+
+        startPoint curve =
+            case curve of
+                [] ->
+                    ( 0.0, 0.0 )
+
+                c :: cs ->
+                    case c of
+                        ArcSegment arc ->
+                            Arc2d.startPoint arc |> pointToVec
+
+                        LineSegment line ->
+                            LineSegment2d.startPoint line |> pointToVec
     in
-        (List.map convertSegment curve
+        (List.map convertSegment (Debug.log "curve" curve)
             |> List.map Segment.toDrawTo
-            |> SubPath.subpath (LowLevel.Command.moveTo ( 0.0, 0.0 ))
+            |> SubPath.subpath (LowLevel.Command.moveTo <| startPoint curve)
+            |> Debug.log "subpath"
             |> SubPath.element
         )
             attributes

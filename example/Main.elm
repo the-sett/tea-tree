@@ -235,10 +235,10 @@ wedge center { label, size, startAngle, endAngle, innerRadius, outerRadius, colo
                 (Point2d.fromPolarCoordinates ( outerRadius, endAngle ))
                 |> LineSegment2d.translateBy (Vector2d.from Point2d.origin center)
     in
-        Curve2d.fromArc innerArc
+        Curve2d.fromLineSegment startLine
+            |> Curve2d.addArc innerArc
             |> Curve2d.addLineSegment endLine
             |> Curve2d.addArc outerArc
-            |> Curve2d.addLineSegment startLine
             |> Curve2d.curve2d [ fill <| Fill color, strokeWidth 0 ]
 
 
