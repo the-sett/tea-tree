@@ -4,8 +4,8 @@ import Arc2d exposing (Arc2d)
 import LineSegment2d exposing (LineSegment2d)
 
 
-type Curve2d
-    = List Segment
+type alias Curve2d =
+    List Segment
 
 
 type Segment
@@ -20,7 +20,7 @@ fromArc arc =
 
 addArc : Arc2d -> Curve2d -> Curve2d
 addArc arc curve =
-    (fromArc arc) :: curve
+    (ArcSegment arc) :: curve
 
 
 addArcs : List Arc2d -> Curve2d -> Curve2d
@@ -30,7 +30,7 @@ addArcs arcs curve =
             curve
 
         a :: ass ->
-            (fromArc a) :: (addArcs ass curve)
+            (ArcSegment a) :: (addArcs ass curve)
 
 
 fromLineSegment : LineSegment2d -> Curve2d
@@ -40,7 +40,7 @@ fromLineSegment line =
 
 addLineSegment : LineSegment2d -> Curve2d -> Curve2d
 addLineSegment line curve =
-    (fromLineSegment line) :: curve
+    (LineSegment line) :: curve
 
 
 addLineSegments : List LineSegment2d -> Curve2d -> Curve2d
@@ -50,7 +50,8 @@ addLineSegments lines curve =
             curve
 
         l :: ls ->
-            (fromLine l) :: (addLineSegments ls curve)
+            (LineSegment l) :: (addLineSegments ls curve)
 
 
-curve2d : List (Attribute msg) -> Curve2d -> Svg msg
+
+--curve2d : List (Attribute msg) -> Curve2d -> Svg msg

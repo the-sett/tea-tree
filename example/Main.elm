@@ -3,6 +3,7 @@ module Main exposing (..)
 import AnimationFrame
 import Arc2d exposing (Arc2d)
 import Color exposing (Color)
+import Curve2d exposing (Curve2d)
 import Ease
 import Geometry.Svg
 import Html exposing (Html)
