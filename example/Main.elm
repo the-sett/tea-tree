@@ -53,13 +53,6 @@ type alias ReadyModel =
     }
 
 
-type Msg
-    = LoadResult (Result Http.Error (Tree Wedge))
-    | TextToSVGMsg TextToSVG.Msg
-    | WindowSize Window.Size
-    | ClickElement String
-
-
 type alias Wedge =
     { label : String
     , size : Float
@@ -71,6 +64,13 @@ type alias Wedge =
     , outerRadius : Float
     , color : Color
     }
+
+
+type Msg
+    = LoadResult (Result Http.Error (Tree Wedge))
+    | TextToSVGMsg TextToSVG.Msg
+    | WindowSize Window.Size
+    | ClickElement String
 
 
 init : ( Model, Cmd Msg )
@@ -119,69 +119,42 @@ windowSizeToFrame size =
         |> rectToFrame
 
 
+
+-- Rendering
+
+
+black =
+    Color.black
+
+
+white =
+    Color.white
+
+
+offWhite =
+    Color.rgb 247 245 248
+
+
+midGray =
+    Color.gray
+
+
+strongPrintGray =
+    Color.rgb 32 32 32
+
+
+printGray =
+    Color.rgb 48 48 48
+
+
 view : Model -> Html Msg
 view model =
     case model of
         Ready ready ->
-            --printTree ready.tree
             diagram ready
 
         _ ->
             Html.div [] []
-
-
-printTree : Tree Wedge -> Html msg
-printTree tree =
-    let
-        printWedge wedge =
-            Html.div []
-                [ Html.text "Label : "
-                , Html.text wedge.label
-                , Html.br [] []
-                , Html.text "Depth : "
-                , Html.text <| toString wedge.depth
-                , Html.br [] []
-                , Html.text "Fraction : "
-                , Html.text <| toString wedge.fraction
-                , Html.br [] []
-                , Html.text "Size : "
-                , Html.text <| toString wedge.size
-                , Html.br [] []
-                , Html.text "Start Angle : "
-                , Html.text <| toString wedge.startAngle
-                , Html.br [] []
-                , Html.text "End Angle : "
-                , Html.text <| toString wedge.endAngle
-                , Html.br [] []
-                , Html.text "Inner Radius : "
-                , Html.text <| toString wedge.innerRadius
-                , Html.br [] []
-                , Html.text "Outer Radius : "
-                , Html.text <| toString wedge.outerRadius
-                , Html.br [] []
-                , Html.br [] []
-                ]
-
-        printFn zipper =
-            case TeaTree.goToNext zipper of
-                Just stepZipper ->
-                    let
-                        wedge =
-                            TeaTree.datum stepZipper
-                    in
-                        (printWedge wedge)
-                            :: printFn stepZipper
-
-                Nothing ->
-                    []
-
-        startZipper =
-            TeaTree.zipper tree
-    in
-        Html.div []
-            ((printWedge <| TeaTree.datum startZipper)
-                :: (printFn startZipper)
-            )
 
 
 diagram : { frame : Frame, tree : Tree Wedge } -> Html Msg
@@ -286,32 +259,13 @@ background size =
             []
 
 
-black =
-    Color.black
-
-
-white =
-    Color.white
-
-
-offWhite =
-    Color.rgb 247 245 248
-
-
-midGray =
-    Color.gray
-
-
-strongPrintGray =
-    Color.rgb 32 32 32
-
-
-printGray =
-    Color.rgb 48 48 48
-
-
 
 -- REST Calls
+-- These fetch and deocde the example .json file.
+
+
+type Flare
+    = Flare { name : String, children : List Flare, size : Maybe Int }
 
 
 fetchExample : Task Http.Error (Tree Wedge)
@@ -322,11 +276,7 @@ fetchExample =
 
 treeDecoder : Decoder (Tree Wedge)
 treeDecoder =
-    (Decode.map (flareToWedgeTree >> initLayout) flareDecoder)
-
-
-type Flare
-    = Flare { name : String, children : List Flare, size : Maybe Int }
+    (Decode.map (flareToWedgeTree >> initLayoutTree) flareDecoder)
 
 
 flareDecoder : Decoder Flare
@@ -345,18 +295,8 @@ flareDecoder =
         |: Decode.maybe (Decode.field "size" Decode.int)
 
 
-maybeEmptyList : Maybe (List a) -> List a
-maybeEmptyList maybeList =
-    case maybeList of
-        Nothing ->
-            []
-
-        Just xs ->
-            xs
-
-
-initLayout : Tree Wedge -> Tree Wedge
-initLayout tree =
+initLayoutTree : Tree Wedge -> Tree Wedge
+initLayoutTree tree =
     let
         size =
             TeaTree.zipper tree |> TeaTree.datum |> .size
@@ -366,8 +306,8 @@ initLayout tree =
                 | fraction = fraction
                 , startAngle = accum * pi
                 , endAngle = (accum + fraction) * pi
-                , innerRadius = wedge.depth * 50 |> toFloat
-                , outerRadius = wedge.depth * 50 + 50 |> toFloat
+                , innerRadius = wedge.depth * 80 |> toFloat
+                , outerRadius = (wedge.depth + 1) * 80 |> toFloat
             }
 
         initFn accum zipper =
@@ -410,13 +350,7 @@ flareToWedgeTree (Flare flare) =
         setWedgeSize size wedge =
             { wedge | size = size }
 
-        --addChildren : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChildren depth flares zipper =
-            -- _ =
-            --     Debug.log "addChildren - flares" flares
-            --
-            -- _ =
-            --     Debug.log "addChildren - zipper" zipper
             case flares of
                 [] ->
                     ( zipper, TeaTree.datum zipper |> .size )
@@ -434,40 +368,27 @@ flareToWedgeTree (Flare flare) =
                     in
                         ( fZipper |> TeaTree.updateFocusDatum (setWedgeSize totalSize), totalSize )
 
-        --addChild : Flare -> Zipper Wedge -> ( Zipper Wedge, Float )
         addChild depth flare zipper =
-            -- _ =
-            --     Debug.log "addChild - flare" flare
-            --
-            -- _ =
-            --     Debug.log "addChild - zipper" zipper
             let
                 node =
                     (makeNode (depth + 1) flare)
 
                 emptyChild =
                     TeaTree.insertChild node zipper
-                        --|> Debug.log "with insertChild"
                         |> TeaTree.goToChild 0
-                        --|> Debug.log "with goToChild"
                         |> Maybe.withDefault zipper
 
                 ( completeChild, childSize ) =
                     emptyChild
                         |> addChildren (depth + 1) flare.children
-
-                --|> Debug.log "with addChildren"
             in
                 ( completeChild
                     |> TeaTree.goUp
-                    --|> Debug.log "with goUp"
                     |> Maybe.withDefault zipper
                     |> TeaTree.updateFocusDatum (setWedgeSize (node.size + childSize))
-                  --|> Debug.log "with updateFocusDatum"
                 , childSize
                 )
 
-        --walk : Flare -> Zipper Wedge
         walk flare =
             let
                 ( zipper, size ) =
@@ -477,3 +398,17 @@ flareToWedgeTree (Flare flare) =
     in
         walk flare
             |> TeaTree.toTree
+
+
+
+-- Util code
+
+
+maybeEmptyList : Maybe (List a) -> List a
+maybeEmptyList maybeList =
+    case maybeList of
+        Nothing ->
+            []
+
+        Just xs ->
+            xs
