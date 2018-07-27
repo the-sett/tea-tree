@@ -2,6 +2,13 @@ module Curve2d exposing (..)
 
 import Arc2d exposing (Arc2d)
 import LineSegment2d exposing (LineSegment2d)
+import LowLevel.Command
+import Path
+import Point2d
+import Segment
+import SubPath
+import Svg exposing (Svg, Attribute)
+import Vector2
 
 
 type alias Curve2d =
@@ -53,5 +60,33 @@ addLineSegments lines curve =
             (LineSegment l) :: (addLineSegments ls curve)
 
 
+pointToVec : Point2d.Point2d -> Vector2.Vec2 Float
+pointToVec point =
+    Point2d.coordinates point
 
---curve2d : List (Attribute msg) -> Curve2d -> Svg msg
+
+curve2d : List (Attribute msg) -> Curve2d -> Svg msg
+curve2d attributes curve =
+    let
+        convertSegment segment =
+            case segment of
+                ArcSegment arc ->
+                    Segment.Arc
+                        { arcFlag = LowLevel.Command.smallestArc
+                        , direction = LowLevel.Command.clockwise
+                        , start = Arc2d.startPoint arc |> pointToVec
+                        , end = Arc2d.endPoint arc |> pointToVec
+                        , radii = ( 50.0, 50.0 )
+                        , xAxisRotate = Arc2d.sweptAngle arc
+                        }
+
+                LineSegment line ->
+                    Segment.LineSegment (LineSegment2d.startPoint line |> pointToVec)
+                        (LineSegment2d.endPoint line |> pointToVec)
+    in
+        (List.map convertSegment curve
+            |> List.map Segment.toDrawTo
+            |> SubPath.subpath (LowLevel.Command.moveTo ( 0.0, 0.0 ))
+            |> SubPath.element
+        )
+            attributes

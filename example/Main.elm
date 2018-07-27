@@ -214,7 +214,6 @@ wedge center { label, size, startAngle, endAngle, innerRadius, outerRadius, colo
                 , startAngle = startAngle
                 , sweptAngle = endAngle - startAngle
                 }
-                |> Geometry.Svg.arc2d [ fill FillNone, strokeWidth 1, stroke color ]
 
         outerArc =
             Arc2d.with
@@ -223,23 +222,24 @@ wedge center { label, size, startAngle, endAngle, innerRadius, outerRadius, colo
                 , startAngle = startAngle
                 , sweptAngle = endAngle - startAngle
                 }
-                |> Geometry.Svg.arc2d [ fill FillNone, strokeWidth 1, stroke color ]
 
         startLine =
             LineSegment2d.from
                 (Point2d.fromPolarCoordinates ( innerRadius, startAngle ))
                 (Point2d.fromPolarCoordinates ( outerRadius, startAngle ))
                 |> LineSegment2d.translateBy (Vector2d.from Point2d.origin center)
-                |> Geometry.Svg.lineSegment2d [ fill FillNone, strokeWidth 1, stroke color ]
 
         endLine =
             LineSegment2d.from
                 (Point2d.fromPolarCoordinates ( innerRadius, endAngle ))
                 (Point2d.fromPolarCoordinates ( outerRadius, endAngle ))
                 |> LineSegment2d.translateBy (Vector2d.from Point2d.origin center)
-                |> Geometry.Svg.lineSegment2d [ fill FillNone, strokeWidth 1, stroke color ]
     in
-        g [] [ innerArc, outerArc, startLine, endLine ]
+        Curve2d.fromArc innerArc
+            |> Curve2d.addLineSegment endLine
+            |> Curve2d.addArc outerArc
+            |> Curve2d.addLineSegment startLine
+            |> Curve2d.curve2d [ fill <| Fill color, strokeWidth 0 ]
 
 
 background : Sized a -> Svg msg
@@ -345,7 +345,7 @@ flareToWedgeTree (Flare flare) =
             , endAngle = 0.0
             , innerRadius = 0.0
             , outerRadius = 0.0
-            , color = black
+            , color = Color.rgba 200 120 80 0.6
             }
 
         setWedgeSize size wedge =
