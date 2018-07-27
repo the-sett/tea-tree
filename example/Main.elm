@@ -123,8 +123,8 @@ view : Model -> Html Msg
 view model =
     case model of
         Ready ready ->
-            --diagram ready
-            printTree ready.tree
+            --printTree ready.tree
+            diagram ready
 
         _ ->
             Html.div [] []
@@ -207,8 +207,27 @@ wheel frame tree =
     let
         center =
             middle frame |> (\c -> Point2d.fromCoordinates ( c.x, c.y ))
+
+        printFn zipper =
+            case TeaTree.goToNext zipper of
+                Just stepZipper ->
+                    let
+                        datum =
+                            TeaTree.datum stepZipper
+                    in
+                        (wedge center datum)
+                            :: printFn stepZipper
+
+                Nothing ->
+                    []
+
+        startZipper =
+            TeaTree.zipper tree
     in
-        wedge center ((TeaTree.zipper >> TeaTree.datum) tree)
+        g []
+            ((wedge center <| TeaTree.datum startZipper)
+                :: (printFn startZipper)
+            )
 
 
 wedge : Point2d -> Wedge -> Svg msg
@@ -345,8 +364,10 @@ initLayout tree =
         layoutWedge accum fraction wedge =
             { wedge
                 | fraction = fraction
-                , startAngle = accum
-                , endAngle = accum + fraction
+                , startAngle = accum * pi
+                , endAngle = (accum + fraction) * pi
+                , innerRadius = wedge.depth * 50 |> toFloat
+                , outerRadius = wedge.depth * 50 + 50 |> toFloat
             }
 
         initFn accum zipper =
