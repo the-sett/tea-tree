@@ -99,8 +99,11 @@ curve2d attributes curve =
                         LineSegment line ->
                             LineSegment2d.startPoint line |> pointToVec
     in
-        (List.map convertSegment (Debug.log "curve" curve)
+        (Debug.log "curve" curve
+            |> List.map convertSegment
+            |> Debug.log "converted segments"
             |> List.map Segment.toDrawTo
+            |> Debug.log "draw tos"
             |> SubPath.subpath (LowLevel.Command.moveTo <| startPoint curve)
             |> Debug.log "subpath"
             |> SubPath.element
