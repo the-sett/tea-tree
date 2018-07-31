@@ -219,8 +219,8 @@ wedge center { label, size, startAngle, endAngle, innerRadius, outerRadius, colo
             Arc2d.with
                 { centerPoint = center
                 , radius = outerRadius
-                , startAngle = startAngle
-                , sweptAngle = endAngle - startAngle
+                , startAngle = endAngle
+                , sweptAngle = startAngle - endAngle
                 }
 
         startLine =

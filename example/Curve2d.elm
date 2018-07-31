@@ -75,7 +75,11 @@ curve2d attributes curve =
                     --     (Arc2d.endPoint arc |> pointToVec)
                     Segment.Arc
                         { arcFlag = LowLevel.Command.smallestArc
-                        , direction = LowLevel.Command.clockwise
+                        , direction =
+                            if Arc2d.sweptAngle arc < 0 then
+                                LowLevel.Command.counterClockwise
+                            else
+                                LowLevel.Command.clockwise
                         , start = Arc2d.startPoint arc |> pointToVec
                         , end = Arc2d.endPoint arc |> pointToVec
                         , radii = ( Arc2d.radius arc, Arc2d.radius arc )
