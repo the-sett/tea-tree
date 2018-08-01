@@ -83,6 +83,7 @@ type Zipper a
         , currentPath : Path
         , innerTree : InnerTree a
         , crumbs : Breadcrumbs a
+        , depth : Int
         }
 
 
@@ -154,6 +155,7 @@ zipper (Tree tree) =
                     Path inner.id []
         , innerTree = tree.innerTree
         , crumbs = []
+        , depth = 0
         }
 
 
@@ -300,6 +302,7 @@ goToChild n (Zipper zipper) =
                                 , after = after
                                 }
                                     :: zipper.crumbs
+                            , depth = zipper.depth + 1
                             }
                         )
 
@@ -327,6 +330,7 @@ goUp (Zipper zipper) =
                             , children = (before ++ [ zipper.innerTree ] ++ after)
                             }
                     , crumbs = bs
+                    , depth = zipper.depth - 1
                     }
                 )
 
@@ -363,6 +367,7 @@ goLeft (Zipper zipper) =
                                 , after = zipper.innerTree :: after
                                 }
                                     :: bs
+                            , depth = zipper.depth
                             }
                         )
 
@@ -399,6 +404,7 @@ goRight (Zipper zipper) =
                                 , after = rest
                                 }
                                     :: bs
+                            , depth = zipper.depth
                             }
                         )
 
@@ -509,7 +515,7 @@ updateFocusDatum fn (Zipper zipper) =
 
 {-| -}
 insertChild : a -> Zipper a -> Zipper a
-insertChild child (Zipper { nextId, currentPath, innerTree, crumbs }) =
+insertChild child (Zipper { nextId, currentPath, innerTree, crumbs, depth }) =
     let
         steppedId =
             nextId + 1
@@ -519,12 +525,13 @@ insertChild child (Zipper { nextId, currentPath, innerTree, crumbs }) =
             , currentPath = currentPath
             , innerTree = insertNodeToTree child nextId innerTree
             , crumbs = crumbs
+            , depth = depth
             }
 
 
 {-| -}
 appendChild : a -> Zipper a -> Zipper a
-appendChild child (Zipper { nextId, currentPath, innerTree, crumbs }) =
+appendChild child (Zipper { nextId, currentPath, innerTree, crumbs, depth }) =
     let
         steppedId =
             nextId + 1
@@ -534,6 +541,7 @@ appendChild child (Zipper { nextId, currentPath, innerTree, crumbs }) =
             , currentPath = currentPath
             , innerTree = appendNodeToTree child nextId innerTree
             , crumbs = crumbs
+            , depth = depth
             }
 
 
