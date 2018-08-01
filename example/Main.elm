@@ -305,10 +305,11 @@ initLayoutTree tree =
         layoutWedge accum fraction wedge =
             { wedge
                 | fraction = fraction
-                , startAngle = accum * pi
-                , endAngle = (accum + fraction) * pi
+                , startAngle = accum * 2 * pi
+                , endAngle = (accum + fraction) * 2 * pi
                 , innerRadius = wedge.depth * 80 |> toFloat
                 , outerRadius = (wedge.depth + 1) * 80 |> toFloat
+                , color = Color.hsl accum 0.6 0.8
             }
 
         initFn accum zipper =
