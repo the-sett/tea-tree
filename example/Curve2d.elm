@@ -71,8 +71,6 @@ curve2d attributes curve =
         convertSegment segment =
             case segment of
                 ArcSegment arc ->
-                    -- Segment.LineSegment (Arc2d.startPoint arc |> pointToVec)
-                    --     (Arc2d.endPoint arc |> pointToVec)
                     Segment.Arc
                         { arcFlag = LowLevel.Command.smallestArc
                         , direction =
