@@ -20,6 +20,7 @@ module TeaTree
         , goTo
         , updateFocusDatum
         , datum
+        , depth
         , insertChild
         , appendChild
           --, updateChildren
@@ -498,6 +499,12 @@ datum (Zipper zipper) =
             zipper.innerTree
     in
         inner.datum
+
+
+{-| -}
+depth : Zipper a -> Int
+depth (Zipper zipper) =
+    zipper.depth
 
 
 {-| -}
