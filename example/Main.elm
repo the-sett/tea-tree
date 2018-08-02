@@ -312,7 +312,7 @@ initLayoutTree tree =
                 , color = Color.hsl (accum * 8) 0.6 0.8
             }
 
-        initFn accums prevDepth zipper =
+        initFn starts accum prevDepth zipper =
             let
                 depth =
                     TeaTree.depth zipper
@@ -327,39 +327,42 @@ initLayoutTree tree =
                                 wedge.size / size
 
                             _ =
-                                Debug.log "depth" depth
+                                Debug.log "starts" starts
 
                             _ =
-                                Debug.log "depth" prevDepth
+                                Debug.log "accum" accum
 
                             _ =
                                 Debug.log "fraction" fraction
 
                             _ =
-                                Debug.log "accums" accums
+                                Debug.log "prevDepth" prevDepth
 
-                            adjustedAccums =
+                            _ =
+                                Debug.log "depth" depth
+
+                            start =
+                                List.head starts |> Maybe.withDefault 0.0
+
+                            startTail =
+                                List.tail starts |> Maybe.withDefault []
+
+                            ( nextStarts, nextAccum ) =
                                 if depth < prevDepth then
-                                    List.tail accums |> Maybe.withDefault []
+                                    ( startTail, start )
                                 else if depth == prevDepth then
-                                    accums
+                                    ( starts, accum + fraction )
                                 else
-                                    0.0 :: accums
-
-                            accum =
-                                List.head adjustedAccums |> Maybe.withDefault 0.0
-
-                            accumTail =
-                                List.tail adjustedAccums |> Maybe.withDefault []
+                                    ( accum :: starts, start )
                         in
                             stepZipper
-                                |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
-                                |> initFn ((fraction + accum) :: accumTail) depth
+                                |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
+                                |> initFn nextStarts nextAccum depth
 
                     Nothing ->
                         zipper
     in
-        initFn [ 0 ] 0 (TeaTree.zipper tree)
+        initFn [ 0 ] 0 0 (TeaTree.zipper tree)
             |> TeaTree.goToRoot
             |> TeaTree.toTree
 

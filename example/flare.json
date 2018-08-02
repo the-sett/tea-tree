@@ -9,10 +9,6 @@
       "size": 2
     },
     {
-      "name": "three",
-      "size": 3
-    },
-    {
       "name": "four",
       "children": [{
           "name": "two",
@@ -20,9 +16,21 @@
         },
         {
           "name": "two",
-          "size": 2
+          "children": [{
+              "name": "one",
+              "size": 1
+            },
+            {
+              "name": "one",
+              "size": 1
+            }
+          ]
         }
       ]
+    },
+    {
+      "name": "three",
+      "size": 3
     }
   ]
 }
