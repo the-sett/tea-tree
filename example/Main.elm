@@ -94,18 +94,18 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
         ( LoadingModel, LoadResult result ) ->
-            let
-                _ =
-                    Debug.log "result" result
-            in
-                case result of
-                    Err _ ->
-                        noop model
+            -- let
+            --     _ =
+            --         Debug.log "result" result
+            -- in
+            case result of
+                Err _ ->
+                    noop model
 
-                    Ok tree ->
-                        ( SizingWindow { tree = tree }
-                        , Task.perform WindowSize Window.size
-                        )
+                Ok tree ->
+                    ( SizingWindow { tree = tree }
+                    , Task.perform WindowSize Window.size
+                    )
 
         ( SizingWindow sizingWindowModel, WindowSize windowSize ) ->
             noop (Ready { frame = windowSizeToFrame windowSize, tree = sizingWindowModel.tree })
@@ -312,24 +312,54 @@ initLayoutTree tree =
                 , color = Color.hsl (accum * 8) 0.6 0.8
             }
 
-        initFn accum zipper =
-            case TeaTree.goToNext zipper of
-                Just stepZipper ->
-                    let
-                        wedge =
-                            TeaTree.datum stepZipper
+        initFn accums prevDepth zipper =
+            let
+                depth =
+                    TeaTree.depth zipper
+            in
+                case TeaTree.goToNext zipper of
+                    Just stepZipper ->
+                        let
+                            wedge =
+                                TeaTree.datum stepZipper
 
-                        fraction =
-                            wedge.size / size
-                    in
-                        stepZipper
-                            |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
-                            |> initFn (fraction + accum)
+                            fraction =
+                                wedge.size / size
 
-                Nothing ->
-                    zipper
+                            _ =
+                                Debug.log "depth" depth
+
+                            _ =
+                                Debug.log "depth" prevDepth
+
+                            _ =
+                                Debug.log "fraction" fraction
+
+                            _ =
+                                Debug.log "accums" accums
+
+                            adjustedAccums =
+                                if depth < prevDepth then
+                                    List.tail accums |> Maybe.withDefault []
+                                else if depth == prevDepth then
+                                    accums
+                                else
+                                    0.0 :: accums
+
+                            accum =
+                                List.head adjustedAccums |> Maybe.withDefault 0.0
+
+                            accumTail =
+                                List.tail adjustedAccums |> Maybe.withDefault []
+                        in
+                            stepZipper
+                                |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
+                                |> initFn ((fraction + accum) :: accumTail) depth
+
+                    Nothing ->
+                        zipper
     in
-        initFn 0 (TeaTree.zipper tree)
+        initFn [ 0 ] 0 (TeaTree.zipper tree)
             |> TeaTree.goToRoot
             |> TeaTree.toTree
 
