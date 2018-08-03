@@ -312,57 +312,60 @@ initLayoutTree tree =
                 , color = Color.hsl (accum * 8) 0.6 0.8
             }
 
-        initFn starts accum prevDepth zipper =
-            let
-                depth =
-                    TeaTree.depth zipper
-            in
-                case TeaTree.goToNext zipper of
-                    Just stepZipper ->
-                        let
-                            wedge =
-                                TeaTree.datum stepZipper
+        initFn accum starts prevDepth zipper =
+            case TeaTree.goToNext zipper of
+                Just stepZipper ->
+                    let
+                        depth =
+                            TeaTree.depth stepZipper
 
-                            fraction =
-                                wedge.size / size
+                        wedge =
+                            TeaTree.datum stepZipper
 
-                            _ =
-                                Debug.log "starts" starts
+                        fraction =
+                            wedge.size / size
 
-                            _ =
-                                Debug.log "accum" accum
+                        _ =
+                            Debug.log "starts" starts
 
-                            _ =
-                                Debug.log "fraction" fraction
+                        _ =
+                            Debug.log "accum" accum
 
-                            _ =
-                                Debug.log "prevDepth" prevDepth
+                        _ =
+                            Debug.log "fraction" fraction
 
-                            _ =
-                                Debug.log "depth" depth
+                        _ =
+                            Debug.log "prevDepth" prevDepth
 
-                            start =
-                                List.head starts |> Maybe.withDefault 0.0
+                        _ =
+                            Debug.log "depth" depth
 
-                            startTail =
-                                List.tail starts |> Maybe.withDefault []
+                        popN n l =
+                            case n of
+                                0 ->
+                                    ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
 
-                            ( nextStarts, nextAccum ) =
-                                if depth < prevDepth then
-                                    ( startTail, start )
-                                else if depth == prevDepth then
-                                    ( starts, accum + fraction )
-                                else
-                                    ( accum :: starts, start )
-                        in
-                            stepZipper
-                                |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
-                                |> initFn nextStarts nextAccum depth
+                                n ->
+                                    popN (n - 1) (List.tail l |> Maybe.withDefault [])
 
-                    Nothing ->
-                        zipper
+                        -- ( start, startTail ) =
+                        --     popN 0 starts
+                        ( nextAccum, nextStarts ) =
+                            if depth < prevDepth then
+                                popN (prevDepth - depth - 1) starts
+                            else if depth == prevDepth then
+                                ( accum + fraction, starts )
+                            else
+                                ( accum, (accum + fraction) :: starts )
+                    in
+                        stepZipper
+                            |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
+                            |> initFn nextAccum nextStarts depth
+
+                Nothing ->
+                    zipper
     in
-        initFn [ 0 ] 0 0 (TeaTree.zipper tree)
+        initFn 0 [] 0 (TeaTree.zipper tree)
             |> TeaTree.goToRoot
             |> TeaTree.toTree
 
