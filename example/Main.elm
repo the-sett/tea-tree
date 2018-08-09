@@ -326,19 +326,13 @@ initLayoutTree tree =
                             wedge.size / size
 
                         _ =
-                            Debug.log "starts" starts
-
-                        _ =
-                            Debug.log "accum" accum
-
-                        _ =
-                            Debug.log "fraction" fraction
-
-                        _ =
-                            Debug.log "prevDepth" prevDepth
-
-                        _ =
-                            Debug.log "depth" depth
+                            Debug.log "initFn"
+                                { prevDepth = prevDepth
+                                , depth = depth
+                                , fraction = fraction
+                                , accum = accum
+                                , starts = starts
+                                }
 
                         popN n l =
                             case n of
