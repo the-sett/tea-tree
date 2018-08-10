@@ -364,53 +364,6 @@ initLayoutTree tree =
 
                     Nothing ->
                         wedgeZipper
-
-        --|> initFn nextAccum nextStarts depth
-        -- case TeaTree.goToNext zipper of
-        --     Just stepZipper ->
-        --         let
-        --             depth =
-        --                 TeaTree.depth stepZipper
-        --
-        --             wedge =
-        --                 TeaTree.datum stepZipper
-        --
-        --             fraction =
-        --                 wedge.size / size
-        --
-        --             _ =
-        --                 Debug.log "initFn"
-        --                     { prevDepth = prevDepth
-        --                     , depth = depth
-        --                     , fraction = fraction
-        --                     , accum = accum
-        --                     , starts = starts
-        --                     }
-        --
-        --             popN n l =
-        --                 case n of
-        --                     0 ->
-        --                         ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
-        --
-        --                     n ->
-        --                         popN (n - 1) (List.tail l |> Maybe.withDefault [])
-        --
-        --             -- ( start, startTail ) =
-        --             --     popN 0 starts
-        --             ( nextAccum, nextStarts ) =
-        --                 if depth < prevDepth then
-        --                     popN (prevDepth - depth - 1) starts
-        --                 else if depth == prevDepth then
-        --                     ( accum + fraction, starts )
-        --                 else
-        --                     ( accum, (accum + fraction) :: starts )
-        --         in
-        --             stepZipper
-        --                 |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
-        --                 |> initFn nextAccum nextStarts depth
-        --
-        --     Nothing ->
-        --         zipper
     in
         initFn 0 [] 0 (TeaTree.zipper tree)
             |> TeaTree.goToRoot
