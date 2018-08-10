@@ -205,8 +205,11 @@ wheel frame tree =
 
 
 wedge : Point2d -> Wedge -> Svg msg
-wedge center { label, size, startAngle, endAngle, innerRadius, outerRadius, color } =
+wedge center ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as wedge) =
     let
+        _ =
+            Debug.log "wedge" wedge
+
         innerArc =
             Arc2d.with
                 { centerPoint = center
@@ -302,62 +305,112 @@ initLayoutTree tree =
         size =
             TeaTree.zipper tree |> TeaTree.datum |> .size
 
+        popN n l =
+            case n of
+                0 ->
+                    ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
+
+                n ->
+                    popN (n - 1) (List.tail l |> Maybe.withDefault [])
+
         layoutWedge accum fraction wedge =
             { wedge
                 | fraction = fraction
                 , startAngle = accum * 2 * pi
                 , endAngle = (accum + fraction) * 2 * pi
-                , innerRadius = wedge.depth * 80 |> toFloat
+                , innerRadius = (wedge.depth) * 80 |> toFloat
                 , outerRadius = (wedge.depth + 1) * 80 |> toFloat
                 , color = Color.hsl (accum * 8) 0.6 0.8
             }
 
-        initFn accum starts prevDepth zipper =
-            case TeaTree.goToNext zipper of
-                Just stepZipper ->
-                    let
-                        depth =
-                            TeaTree.depth stepZipper
+        initFn accum starts depth zipper =
+            let
+                depth =
+                    TeaTree.depth zipper
 
-                        wedge =
-                            TeaTree.datum stepZipper
+                wedge =
+                    TeaTree.datum zipper
 
-                        fraction =
-                            wedge.size / size
+                fraction =
+                    wedge.size / size
 
-                        _ =
-                            Debug.log "initFn"
-                                { prevDepth = prevDepth
-                                , depth = depth
-                                , fraction = fraction
-                                , accum = accum
-                                , starts = starts
-                                }
-
-                        popN n l =
-                            case n of
-                                0 ->
-                                    ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
-
-                                n ->
-                                    popN (n - 1) (List.tail l |> Maybe.withDefault [])
-
-                        -- ( start, startTail ) =
-                        --     popN 0 starts
-                        ( nextAccum, nextStarts ) =
-                            if depth < prevDepth then
-                                popN (prevDepth - depth - 1) starts
-                            else if depth == prevDepth then
-                                ( accum + fraction, starts )
-                            else
-                                ( accum, (accum + fraction) :: starts )
-                    in
-                        stepZipper
-                            |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
-                            |> initFn nextAccum nextStarts depth
-
-                Nothing ->
+                wedgeZipper =
                     zipper
+                        |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
+
+                _ =
+                    Debug.log "initFn"
+                        { depth = depth
+                        , fraction = fraction
+                        , accum = accum
+                        }
+            in
+                case TeaTree.goToNext wedgeZipper of
+                    Just stepZipper ->
+                        let
+                            nextDepth =
+                                TeaTree.depth stepZipper
+
+                            ( nextAccum, nextStarts ) =
+                                if nextDepth < depth then
+                                    popN (depth - nextDepth - 1) starts
+                                else if nextDepth == depth then
+                                    ( accum + fraction, starts )
+                                else
+                                    ( accum, (accum + fraction) :: starts )
+                        in
+                            stepZipper
+                                |> initFn nextAccum nextStarts nextDepth
+
+                    Nothing ->
+                        wedgeZipper
+
+        --|> initFn nextAccum nextStarts depth
+        -- case TeaTree.goToNext zipper of
+        --     Just stepZipper ->
+        --         let
+        --             depth =
+        --                 TeaTree.depth stepZipper
+        --
+        --             wedge =
+        --                 TeaTree.datum stepZipper
+        --
+        --             fraction =
+        --                 wedge.size / size
+        --
+        --             _ =
+        --                 Debug.log "initFn"
+        --                     { prevDepth = prevDepth
+        --                     , depth = depth
+        --                     , fraction = fraction
+        --                     , accum = accum
+        --                     , starts = starts
+        --                     }
+        --
+        --             popN n l =
+        --                 case n of
+        --                     0 ->
+        --                         ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
+        --
+        --                     n ->
+        --                         popN (n - 1) (List.tail l |> Maybe.withDefault [])
+        --
+        --             -- ( start, startTail ) =
+        --             --     popN 0 starts
+        --             ( nextAccum, nextStarts ) =
+        --                 if depth < prevDepth then
+        --                     popN (prevDepth - depth - 1) starts
+        --                 else if depth == prevDepth then
+        --                     ( accum + fraction, starts )
+        --                 else
+        --                     ( accum, (accum + fraction) :: starts )
+        --         in
+        --             stepZipper
+        --                 |> TeaTree.updateFocusDatum (layoutWedge nextAccum fraction)
+        --                 |> initFn nextAccum nextStarts depth
+        --
+        --     Nothing ->
+        --         zipper
     in
         initFn 0 [] 0 (TeaTree.zipper tree)
             |> TeaTree.goToRoot

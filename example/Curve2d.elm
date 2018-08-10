@@ -72,7 +72,11 @@ curve2d attributes curve =
             case segment of
                 ArcSegment arc ->
                     Segment.Arc
-                        { arcFlag = LowLevel.Command.smallestArc
+                        { arcFlag =
+                            if Arc2d.sweptAngle arc > pi || Arc2d.sweptAngle arc < -pi then
+                                LowLevel.Command.largestArc
+                            else
+                                LowLevel.Command.smallestArc
                         , direction =
                             if Arc2d.sweptAngle arc < 0 then
                                 LowLevel.Command.counterClockwise
