@@ -94,10 +94,6 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
         ( LoadingModel, LoadResult result ) ->
-            -- let
-            --     _ =
-            --         Debug.log "result" result
-            -- in
             case result of
                 Err _ ->
                     noop model
@@ -109,6 +105,9 @@ update action model =
 
         ( SizingWindow sizingWindowModel, WindowSize windowSize ) ->
             noop (Ready { frame = windowSizeToFrame windowSize, tree = sizingWindowModel.tree })
+
+        ( Ready readyModel, WindowSize windowSize ) ->
+            noop (Ready { frame = windowSizeToFrame windowSize, tree = readyModel.tree })
 
         ( _, _ ) ->
             noop model
