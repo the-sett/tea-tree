@@ -28,6 +28,8 @@ module TeaTree
           -- Path operations
         , goToPath
         , updateDatum
+          -- Sorting
+        , sortBy
         )
 
 {-| Todo:
@@ -61,6 +63,11 @@ can be made more efficient.
 ## Path operations
 
 @docs goToPath, updateDatum
+
+
+## Sorting
+
+@docs sortBy
 
 -}
 
@@ -617,3 +624,34 @@ updateDatum path fn tree =
         |> Maybe.map toTree
         -- Silent fail if the path is wrong.
         |> Maybe.withDefault tree
+
+
+{-| -}
+sortBy : (a -> comparable) -> Tree a -> Tree a
+sortBy sortFn (Tree tree) =
+    let
+        innerSortBy sortFn (InnerTree innerTree) =
+            InnerTree
+                { id = innerTree.id
+                , datum = innerTree.datum
+                , children =
+                    List.map (innerSortBy sortFn) innerTree.children
+                        |> List.sortBy (\(InnerTree node) -> sortFn node.datum)
+                }
+    in
+        Tree
+            { nextId = tree.nextId
+            , innerTree = innerSortBy sortFn tree.innerTree
+            }
+
+
+
+-- type InnerTree a
+--     = InnerTree
+--         { id : Id
+--         , datum : a
+--         , children : Forest a
+--         }
+--
+-- type alias Forest a =
+--    List (InnerTree a)

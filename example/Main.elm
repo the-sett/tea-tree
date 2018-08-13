@@ -241,7 +241,7 @@ wedge center ({ label, size, startAngle, endAngle, innerRadius, outerRadius, col
             |> Curve2d.addLineSegment endLine
             |> Curve2d.addArc innerArc
             |> Curve2d.addLineSegment startLine
-            |> Curve2d.curve2d [ fill <| Fill color, strokeWidth 0 ]
+            |> Curve2d.curve2d [ fill <| Fill color, strokeWidth 0.4, stroke white ]
 
 
 background : Sized a -> Svg msg
@@ -279,7 +279,13 @@ fetchExample =
 
 treeDecoder : Decoder (Tree Wedge)
 treeDecoder =
-    (Decode.map (flareToWedgeTree >> initLayoutTree) flareDecoder)
+    (Decode.map
+        (flareToWedgeTree
+            >> (TeaTree.sortBy .size)
+            >> initLayoutTree
+        )
+        flareDecoder
+    )
 
 
 flareDecoder : Decoder Flare
