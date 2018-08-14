@@ -562,10 +562,15 @@ appendChild child (Zipper { nextId, currentPath, innerTree, crumbs, depth }) =
 {-| -}
 getPath : Zipper a -> Path
 getPath (Zipper zipper) =
-    zipper.currentPath
+    let
+        (Path id steps) =
+            zipper.currentPath
+    in
+        Path id <| List.reverse steps
 
 
 
+-- = Path Id (List Int)
 -- Path operations
 
 

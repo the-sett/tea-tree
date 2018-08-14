@@ -111,6 +111,26 @@ update action model =
         ( Ready readyModel, WindowSize windowSize ) ->
             noop (Ready { frame = windowSizeToFrame windowSize, tree = readyModel.tree })
 
+        ( Ready readyModel, HoverElement path ) ->
+            noop
+                (Ready
+                    { readyModel
+                        | tree =
+                            -- TeaTree.goToPath path readyModel.tree
+                            --     |> Maybe.map TeaTree.goToRoot
+                            --     |> Maybe.map TeaTree.toTree
+                            --     |> Maybe.withDefault readyModel.tree
+                            TeaTree.updateDatum (Debug.log "path" path)
+                                (\wedge ->
+                                    { wedge
+                                        | color =
+                                            Color.hsl 0.5 1.0 1.0
+                                    }
+                                )
+                                readyModel.tree
+                    }
+                )
+
         ( _, _ ) ->
             noop model
 
