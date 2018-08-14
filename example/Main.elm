@@ -7,6 +7,7 @@ import Curve2d exposing (Curve2d)
 import Ease
 import Geometry.Svg
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import LineSegment2d exposing (LineSegment2d)
 import Json.Decode as Decode exposing (Decoder)

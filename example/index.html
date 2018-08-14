@@ -1,0 +1,16 @@
+<html>
+<head>
+  <style>
+    /* custom styles? Sure! */
+  </style>
+</head>
+<body style="overflow: hidden;">
+  <!-- Relative to index.html, main.elm lives in `src/Main.elm`. -->
+  <!-- Prefixing that with `/_compile/` gives us magic! -->
+  <script src="/_compile/Main.elm"></script>
+  <script>
+    var app = Elm.Main.fullscreen()
+    // You could also pass flags, or setup some ports, ...
+  </script>
+</body>
+</html>
