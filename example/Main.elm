@@ -325,7 +325,7 @@ initLayoutTree tree =
                 , endAngle = (accum + fraction) * 2 * pi
                 , innerRadius = (wedge.depth) * 80 |> toFloat
                 , outerRadius = (wedge.depth + 1) * 80 |> toFloat
-                , color = Color.hsl (accum * pi * 2) 0.8 0.8
+                , color = Color.hsl ((accum + fraction / 2) * pi * 2) ((toFloat wedge.depth) * 0.05 + 0.7) ((toFloat wedge.depth) * 0.02 + 0.7)
             }
 
         initFn accum starts depth zipper =
