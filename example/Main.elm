@@ -20,7 +20,7 @@ import TypedSvg exposing (svg, g, circle, rect, text_, tspan, line, path)
 import TypedSvg.Attributes.InPx exposing (cx, cy, r, strokeWidth, x, y, x1, y1, x2, y2, rx, ry, width, height, fontSize)
 import TypedSvg.Attributes exposing (viewBox, shapeRendering, fill, fillOpacity, preserveAspectRatio, stroke, strokeDasharray, strokeLinecap, strokeLinejoin, fontFamily, textAnchor, textRendering, color, d, transform)
 import TypedSvg.Core exposing (svgNamespace, text, Svg)
-import TypedSvg.Events exposing (onClick)
+import TypedSvg.Events
 import TypedSvg.Types exposing (px, Align(..), Fill(..), Scale(..), MeetOrSlice(..), ShapeRendering(..), Opacity(..), AnchorAlignment(..), StrokeLinecap(..), StrokeLinejoin(..), TextRendering(..), Transform(..))
 import Utils.GridMetrics exposing (Sized, Frame, rectToFrame, middle)
 import Vector2d exposing (Vector2d)
@@ -71,7 +71,7 @@ type Msg
     = LoadResult (Result Http.Error (Tree Wedge))
     | TextToSVGMsg TextToSVG.Msg
     | WindowSize Window.Size
-    | ClickElement String
+    | HoverElement TeaTree.Path
 
 
 init : ( Model, Cmd Msg )
@@ -132,7 +132,7 @@ white =
 
 
 offWhite =
-    Color.rgb 247 245 248
+    Color.rgb 242 235 238
 
 
 midGray =
@@ -175,7 +175,7 @@ diagram diag =
             [ background frame, wheel frame diag.tree ]
 
 
-wheel : Frame -> Tree Wedge -> Svg msg
+wheel : Frame -> Tree Wedge -> Svg Msg
 wheel frame tree =
     let
         center =
@@ -188,7 +188,7 @@ wheel frame tree =
                         datum =
                             TeaTree.datum stepZipper
                     in
-                        (wedge center datum)
+                        (wedge center (TeaTree.getPath stepZipper) datum)
                             :: printFn stepZipper
 
                 Nothing ->
@@ -198,13 +198,13 @@ wheel frame tree =
             TeaTree.zipper tree
     in
         g []
-            ((wedge center <| TeaTree.datum startZipper)
+            ((wedge center (TeaTree.getPath startZipper) (TeaTree.datum startZipper))
                 :: (printFn startZipper)
             )
 
 
-wedge : Point2d -> Wedge -> Svg msg
-wedge center ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as wedge) =
+wedge : Point2d -> TeaTree.Path -> Wedge -> Svg Msg
+wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as wedge) =
     let
         _ =
             Debug.log "wedge" wedge
@@ -241,7 +241,12 @@ wedge center ({ label, size, startAngle, endAngle, innerRadius, outerRadius, col
             |> Curve2d.addLineSegment endLine
             |> Curve2d.addArc innerArc
             |> Curve2d.addLineSegment startLine
-            |> Curve2d.curve2d [ fill <| Fill color, strokeWidth 0.4, stroke white ]
+            |> Curve2d.curve2d
+                [ fill <| Fill color
+                , strokeWidth 0.4
+                , stroke white
+                , TypedSvg.Events.onMouseOver <| HoverElement path
+                ]
 
 
 background : Sized a -> Svg msg
