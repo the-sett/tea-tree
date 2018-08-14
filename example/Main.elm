@@ -334,8 +334,8 @@ initLayoutTree tree =
                 | fraction = fraction
                 , startAngle = accum * 2 * pi
                 , endAngle = (accum + fraction) * 2 * pi
-                , innerRadius = (wedge.depth) * 80 |> toFloat
-                , outerRadius = (wedge.depth + 1) * 80 |> toFloat
+                , innerRadius = (wedge.depth) * 90 |> toFloat
+                , outerRadius = (wedge.depth + 1) * 90 |> toFloat
                 , color =
                     Color.hsl
                         ((accum + fraction / 2) * pi * 2)
