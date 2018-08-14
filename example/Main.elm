@@ -8,6 +8,7 @@ import Ease
 import Geometry.Svg
 import Html exposing (Html)
 import Html.Attributes
+import Html.Lazy
 import Http
 import LineSegment2d exposing (LineSegment2d)
 import Json.Decode as Decode exposing (Decoder)
@@ -33,7 +34,7 @@ main =
         { init = init
         , subscriptions = subscriptions
         , update = update
-        , view = view
+        , view = fullView
         }
 
 
@@ -150,6 +151,11 @@ printGray =
 
 view : Model -> Html Msg
 view model =
+    Html.Lazy.lazy fullView model
+
+
+fullView : Model -> Html Msg
+fullView model =
     case model of
         Ready ready ->
             diagram ready
@@ -207,9 +213,8 @@ wheel frame tree =
 wedge : Point2d -> TeaTree.Path -> Wedge -> Svg Msg
 wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as wedge) =
     let
-        _ =
-            Debug.log "wedge" wedge
-
+        -- _ =
+        --     Debug.log "wedge" wedge
         innerArc =
             Arc2d.with
                 { centerPoint = center
@@ -353,12 +358,12 @@ initLayoutTree tree =
                     zipper
                         |> TeaTree.updateFocusDatum (layoutWedge accum fraction)
 
-                _ =
-                    Debug.log "initFn"
-                        { depth = depth
-                        , fraction = fraction
-                        , accum = accum
-                        }
+                -- _ =
+                --     Debug.log "initFn"
+                --         { depth = depth
+                --         , fraction = fraction
+                --         , accum = accum
+                --         }
             in
                 case TeaTree.goToNext wedgeZipper of
                     Just stepZipper ->
