@@ -34,7 +34,7 @@ main =
         { init = init
         , subscriptions = subscriptions
         , update = update
-        , view = fullView
+        , view = view
         }
 
 
@@ -171,7 +171,9 @@ printGray =
 
 view : Model -> Html Msg
 view model =
-    Html.Lazy.lazy fullView model
+    Html.div []
+        [ Html.Lazy.lazy fullView model
+        ]
 
 
 fullView : Model -> Html Msg
