@@ -74,6 +74,7 @@ type Msg
     | TextToSVGMsg TextToSVG.Msg
     | WindowSize Window.Size
     | HoverElement TeaTree.Path
+    | LeaveElement TeaTree.Path
 
 
 init : ( Model, Cmd Msg )
@@ -112,24 +113,10 @@ update action model =
             noop (Ready { frame = windowSizeToFrame windowSize, tree = readyModel.tree })
 
         ( Ready readyModel, HoverElement path ) ->
-            noop
-                (Ready
-                    { readyModel
-                        | tree =
-                            -- TeaTree.goToPath path readyModel.tree
-                            --     |> Maybe.map TeaTree.goToRoot
-                            --     |> Maybe.map TeaTree.toTree
-                            --     |> Maybe.withDefault readyModel.tree
-                            TeaTree.updateDatum (Debug.log "path" path)
-                                (\wedge ->
-                                    { wedge
-                                        | color =
-                                            Color.hsl 0.5 1.0 1.0
-                                    }
-                                )
-                                readyModel.tree
-                    }
-                )
+            noop (Ready { readyModel | tree = TeaTree.updateDatum path highlightWedge readyModel.tree })
+
+        ( Ready readyModel, LeaveElement path ) ->
+            noop (Ready { readyModel | tree = TeaTree.updateDatum path normalWedge readyModel.tree })
 
         ( _, _ ) ->
             noop model
@@ -139,6 +126,26 @@ windowSizeToFrame : Window.Size -> Frame
 windowSizeToFrame size =
     { x = 0.0, y = 0.0, w = toFloat size.width, h = toFloat size.height }
         |> rectToFrame
+
+
+highlightWedge wedge =
+    { wedge
+        | color =
+            Color.hsl
+                ((wedge.startAngle + wedge.endAngle) / 2)
+                ((toFloat wedge.depth) * 0.05 + 0.75)
+                ((toFloat wedge.depth) * 0.02 + 0.65)
+    }
+
+
+normalWedge wedge =
+    { wedge
+        | color =
+            Color.hsl
+                ((wedge.startAngle + wedge.endAngle) / 2)
+                ((toFloat wedge.depth) * 0.05 + 0.7)
+                ((toFloat wedge.depth) * 0.02 + 0.7)
+    }
 
 
 
@@ -274,6 +281,7 @@ wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius
                 , strokeWidth 0.4
                 , stroke white
                 , TypedSvg.Events.onMouseOver <| HoverElement path
+                , TypedSvg.Events.onMouseOut <| LeaveElement path
                 ]
 
 
