@@ -1,18 +1,17 @@
-module Utils.GridMetrics
-    exposing
-        ( Sized
-        , Positioned
-        , Size
-        , Position
-        , Frame
-        , rectToFrame
-        , middle
-        , grid
-        , rhythm
-        , fontSizePx
-        , fontGridFraction
-        , plusGridFraction
-        )
+module Utils.GridMetrics exposing
+    ( Frame
+    , Position
+    , Positioned
+    , Size
+    , Sized
+    , fontGridFraction
+    , fontSizePx
+    , grid
+    , middle
+    , plusGridFraction
+    , rectToFrame
+    , rhythm
+    )
 
 
 type alias Positioned a =
@@ -75,9 +74,9 @@ gridFraction : (Int -> Int -> Int) -> Float -> Float
 gridFraction op gridRatio =
     let
         fraction =
-            (toFloat grid) * gridRatio + (toFloat (op grid grid) * (1.0 - gridRatio))
+            toFloat grid * gridRatio + (toFloat (op grid grid) * (1.0 - gridRatio))
     in
-        fraction |> round |> toFloat
+    fraction |> round |> toFloat
 
 
 plusGridFraction : Float -> Float
@@ -92,9 +91,9 @@ minusGridFraction =
 
 fontSizePx : Float -> Float -> Float
 fontSizePx lineSpacing gridUnits =
-    (toFloat grid) * gridUnits / lineSpacing
+    toFloat grid * gridUnits / lineSpacing
 
 
 fontGridFraction : Float -> Float -> Float
 fontGridFraction lineSpacing gridUnits =
-    ((toFloat grid) * gridUnits - (fontSizePx lineSpacing gridUnits)) * 0.7
+    (toFloat grid * gridUnits - fontSizePx lineSpacing gridUnits) * 0.7

@@ -1,4 +1,4 @@
-module Curve2d exposing (..)
+module Curve2d exposing (Curve2d, Segment(..), addArc, addArcs, addLineSegment, addLineSegments, curve2d, fromArc, fromLineSegment, pointToVec)
 
 import Arc2d exposing (Arc2d)
 import LineSegment2d exposing (LineSegment2d)
@@ -7,7 +7,7 @@ import Path
 import Point2d
 import Segment
 import SubPath
-import Svg exposing (Svg, Attribute)
+import Svg exposing (Attribute, Svg)
 import Vector2
 
 
@@ -27,7 +27,7 @@ fromArc arc =
 
 addArc : Arc2d -> Curve2d -> Curve2d
 addArc arc curve =
-    (ArcSegment arc) :: curve
+    ArcSegment arc :: curve
 
 
 addArcs : List Arc2d -> Curve2d -> Curve2d
@@ -37,7 +37,7 @@ addArcs arcs curve =
             curve
 
         a :: ass ->
-            (ArcSegment a) :: (addArcs ass curve)
+            ArcSegment a :: addArcs ass curve
 
 
 fromLineSegment : LineSegment2d -> Curve2d
@@ -47,7 +47,7 @@ fromLineSegment line =
 
 addLineSegment : LineSegment2d -> Curve2d -> Curve2d
 addLineSegment line curve =
-    (LineSegment line) :: curve
+    LineSegment line :: curve
 
 
 addLineSegments : List LineSegment2d -> Curve2d -> Curve2d
@@ -57,7 +57,7 @@ addLineSegments lines curve =
             curve
 
         l :: ls ->
-            (LineSegment l) :: (addLineSegments ls curve)
+            LineSegment l :: addLineSegments ls curve
 
 
 pointToVec : Point2d.Point2d -> Vector2.Vec2 Float
@@ -75,11 +75,13 @@ curve2d attributes curve =
                         { arcFlag =
                             if Arc2d.sweptAngle arc > pi || Arc2d.sweptAngle arc < -pi then
                                 LowLevel.Command.largestArc
+
                             else
                                 LowLevel.Command.smallestArc
                         , direction =
                             if Arc2d.sweptAngle arc < 0 then
                                 LowLevel.Command.counterClockwise
+
                             else
                                 LowLevel.Command.clockwise
                         , start = Arc2d.startPoint arc |> pointToVec
@@ -105,10 +107,10 @@ curve2d attributes curve =
                         LineSegment line ->
                             LineSegment2d.startPoint line |> pointToVec
     in
-        (curve
-            |> List.map convertSegment
-            |> List.map Segment.toDrawTo
-            |> SubPath.subpath (LowLevel.Command.moveTo <| startPoint curve)
-            |> SubPath.element
-        )
-            attributes
+    (curve
+        |> List.map convertSegment
+        |> List.map Segment.toDrawTo
+        |> SubPath.subpath (LowLevel.Command.moveTo <| startPoint curve)
+        |> SubPath.element
+    )
+        attributes

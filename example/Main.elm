@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Flare(..), Model(..), Msg(..), ReadyModel, SizingWindowModel, Wedge, background, black, diagram, fetchExample, flareDecoder, flareToWedgeTree, fullView, highlightWedge, init, initLayoutTree, main, maybeEmptyList, midGray, noop, normalWedge, offWhite, printGray, strongPrintGray, subscriptions, treeDecoder, update, view, wedge, wheel, white, windowSizeToFrame)
 
 import AnimationFrame
 import Arc2d exposing (Arc2d)
@@ -10,21 +10,21 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Lazy
 import Http
-import LineSegment2d exposing (LineSegment2d)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra exposing ((|:), withDefault)
+import LineSegment2d exposing (LineSegment2d)
 import Point2d exposing (Point2d)
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
-import Task exposing (perform, Task)
+import Task exposing (Task, perform)
 import TeaTree exposing (Tree, Zipper)
-import TextToSVG exposing (textAsPath, textAsText, TextAlignment(..), TextRenderFunc)
-import TypedSvg exposing (svg, g, circle, rect, text_, tspan, line, path)
-import TypedSvg.Attributes.InPx exposing (cx, cy, r, strokeWidth, x, y, x1, y1, x2, y2, rx, ry, width, height, fontSize)
-import TypedSvg.Attributes exposing (viewBox, shapeRendering, fill, fillOpacity, preserveAspectRatio, stroke, strokeDasharray, strokeLinecap, strokeLinejoin, fontFamily, textAnchor, textRendering, color, d, transform)
-import TypedSvg.Core exposing (svgNamespace, text, Svg)
+import TextToSVG exposing (TextAlignment(..), TextRenderFunc, textAsPath, textAsText)
+import TypedSvg exposing (circle, g, line, path, rect, svg, text_, tspan)
+import TypedSvg.Attributes exposing (color, d, fill, fillOpacity, fontFamily, preserveAspectRatio, shapeRendering, stroke, strokeDasharray, strokeLinecap, strokeLinejoin, textAnchor, textRendering, transform, viewBox)
+import TypedSvg.Attributes.InPx exposing (cx, cy, fontSize, height, r, rx, ry, strokeWidth, width, x, x1, x2, y, y1, y2)
+import TypedSvg.Core exposing (Svg, svgNamespace, text)
 import TypedSvg.Events
-import TypedSvg.Types exposing (px, Align(..), Fill(..), Scale(..), MeetOrSlice(..), ShapeRendering(..), Opacity(..), AnchorAlignment(..), StrokeLinecap(..), StrokeLinejoin(..), TextRendering(..), Transform(..))
-import Utils.GridMetrics exposing (Sized, Frame, rectToFrame, middle)
+import TypedSvg.Types exposing (Align(..), AnchorAlignment(..), Fill(..), MeetOrSlice(..), Opacity(..), Scale(..), ShapeRendering(..), StrokeLinecap(..), StrokeLinejoin(..), TextRendering(..), Transform(..), px)
+import Utils.GridMetrics exposing (Frame, Sized, middle, rectToFrame)
 import Vector2d exposing (Vector2d)
 import Window
 
@@ -133,8 +133,8 @@ highlightWedge wedge =
         | color =
             Color.hsl
                 ((wedge.startAngle + wedge.endAngle) / 2)
-                ((toFloat wedge.depth) * 0.05 + 0.75)
-                ((toFloat wedge.depth) * 0.02 + 0.65)
+                (toFloat wedge.depth * 0.05 + 0.75)
+                (toFloat wedge.depth * 0.02 + 0.65)
     }
 
 
@@ -143,8 +143,8 @@ normalWedge wedge =
         | color =
             Color.hsl
                 ((wedge.startAngle + wedge.endAngle) / 2)
-                ((toFloat wedge.depth) * 0.05 + 0.7)
-                ((toFloat wedge.depth) * 0.02 + 0.7)
+                (toFloat wedge.depth * 0.05 + 0.7)
+                (toFloat wedge.depth * 0.02 + 0.7)
     }
 
 
@@ -199,16 +199,16 @@ diagram diag =
         frame =
             diag.frame
     in
-        svg
-            [ preserveAspectRatio (Align ScaleMid ScaleMid) Meet
-            , viewBox (round frame.x |> toFloat)
-                (round frame.y |> toFloat)
-                (round frame.w |> toFloat)
-                (round frame.h |> toFloat)
-            , svgNamespace
-            , shapeRendering RenderGeometricPrecision
-            ]
-            [ background frame, wheel frame diag.tree ]
+    svg
+        [ preserveAspectRatio (Align ScaleMid ScaleMid) Meet
+        , viewBox (round frame.x |> toFloat)
+            (round frame.y |> toFloat)
+            (round frame.w |> toFloat)
+            (round frame.h |> toFloat)
+        , svgNamespace
+        , shapeRendering RenderGeometricPrecision
+        ]
+        [ background frame, wheel frame diag.tree ]
 
 
 wheel : Frame -> Tree Wedge -> Svg Msg
@@ -224,8 +224,8 @@ wheel frame tree =
                         datum =
                             TeaTree.datum stepZipper
                     in
-                        (wedge center (TeaTree.getPath stepZipper) datum)
-                            :: printFn stepZipper
+                    wedge center (TeaTree.getPath stepZipper) datum
+                        :: printFn stepZipper
 
                 Nothing ->
                     []
@@ -233,10 +233,10 @@ wheel frame tree =
         startZipper =
             TeaTree.zipper tree
     in
-        g []
-            ((wedge center (TeaTree.getPath startZipper) (TeaTree.datum startZipper))
-                :: (printFn startZipper)
-            )
+    g []
+        (wedge center (TeaTree.getPath startZipper) (TeaTree.datum startZipper)
+            :: printFn startZipper
+        )
 
 
 wedge : Point2d -> TeaTree.Path -> Wedge -> Svg Msg
@@ -272,17 +272,17 @@ wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius
                 (Point2d.fromPolarCoordinates ( outerRadius, endAngle ))
                 |> LineSegment2d.translateBy (Vector2d.from Point2d.origin center)
     in
-        Curve2d.fromArc outerArc
-            |> Curve2d.addLineSegment endLine
-            |> Curve2d.addArc innerArc
-            |> Curve2d.addLineSegment startLine
-            |> Curve2d.curve2d
-                [ fill <| Fill color
-                , strokeWidth 0.4
-                , stroke white
-                , TypedSvg.Events.onMouseOver <| HoverElement path
-                , TypedSvg.Events.onMouseOut <| LeaveElement path
-                ]
+    Curve2d.fromArc outerArc
+        |> Curve2d.addLineSegment endLine
+        |> Curve2d.addArc innerArc
+        |> Curve2d.addLineSegment startLine
+        |> Curve2d.curve2d
+            [ fill <| Fill color
+            , strokeWidth 0.4
+            , stroke white
+            , TypedSvg.Events.onMouseOver <| HoverElement path
+            , TypedSvg.Events.onMouseOut <| LeaveElement path
+            ]
 
 
 background : Sized a -> Svg msg
@@ -291,16 +291,16 @@ background size =
         skirtScale =
             10
     in
-        rect
-            [ fill <| Fill offWhite
-            , fillOpacity <| Opacity 0.8
-            , strokeWidth 0
-            , x -(skirtScale * size.w)
-            , y -(skirtScale * size.h)
-            , width <| (2 * skirtScale + 1) * size.w
-            , height <| (2 * skirtScale + 1) * size.h
-            ]
-            []
+    rect
+        [ fill <| Fill offWhite
+        , fillOpacity <| Opacity 0.8
+        , strokeWidth 0
+        , x -(skirtScale * size.w)
+        , y -(skirtScale * size.h)
+        , width <| (2 * skirtScale + 1) * size.w
+        , height <| (2 * skirtScale + 1) * size.h
+        ]
+        []
 
 
 
@@ -320,18 +320,17 @@ fetchExample =
 
 treeDecoder : Decoder (Tree Wedge)
 treeDecoder =
-    (Decode.map
+    Decode.map
         (flareToWedgeTree
-            >> (TeaTree.sortBy .size)
+            >> TeaTree.sortBy .size
             >> initLayoutTree
         )
         flareDecoder
-    )
 
 
 flareDecoder : Decoder Flare
 flareDecoder =
-    (Decode.succeed
+    Decode.succeed
         (\name children size ->
             Flare
                 { name = name
@@ -339,7 +338,6 @@ flareDecoder =
                 , size = size
                 }
         )
-    )
         |: Decode.field "name" Decode.string
         |: Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder)))))
         |: Decode.maybe (Decode.field "size" Decode.int)
@@ -364,13 +362,13 @@ initLayoutTree tree =
                 | fraction = fraction
                 , startAngle = accum * 2 * pi
                 , endAngle = (accum + fraction) * 2 * pi
-                , innerRadius = (wedge.depth) * 90 |> toFloat
+                , innerRadius = wedge.depth * 90 |> toFloat
                 , outerRadius = (wedge.depth + 1) * 90 |> toFloat
                 , color =
                     Color.hsl
                         ((accum + fraction / 2) * pi * 2)
-                        ((toFloat wedge.depth) * 0.05 + 0.7)
-                        ((toFloat wedge.depth) * 0.02 + 0.7)
+                        (toFloat wedge.depth * 0.05 + 0.7)
+                        (toFloat wedge.depth * 0.02 + 0.7)
             }
 
         initFn accum starts depth zipper =
@@ -395,29 +393,31 @@ initLayoutTree tree =
                 --         , accum = accum
                 --         }
             in
-                case TeaTree.goToNext wedgeZipper of
-                    Just stepZipper ->
-                        let
-                            nextDepth =
-                                TeaTree.depth stepZipper
+            case TeaTree.goToNext wedgeZipper of
+                Just stepZipper ->
+                    let
+                        nextDepth =
+                            TeaTree.depth stepZipper
 
-                            ( nextAccum, nextStarts ) =
-                                if nextDepth < depth then
-                                    popN (depth - nextDepth - 1) starts
-                                else if nextDepth == depth then
-                                    ( accum + fraction, starts )
-                                else
-                                    ( accum, (accum + fraction) :: starts )
-                        in
-                            stepZipper
-                                |> initFn nextAccum nextStarts nextDepth
+                        ( nextAccum, nextStarts ) =
+                            if nextDepth < depth then
+                                popN (depth - nextDepth - 1) starts
 
-                    Nothing ->
-                        wedgeZipper
+                            else if nextDepth == depth then
+                                ( accum + fraction, starts )
+
+                            else
+                                ( accum, (accum + fraction) :: starts )
+                    in
+                    stepZipper
+                        |> initFn nextAccum nextStarts nextDepth
+
+                Nothing ->
+                    wedgeZipper
     in
-        initFn 0 [] 0 (TeaTree.zipper tree)
-            |> TeaTree.goToRoot
-            |> TeaTree.toTree
+    initFn 0 [] 0 (TeaTree.zipper tree)
+        |> TeaTree.goToRoot
+        |> TeaTree.toTree
 
 
 flareToWedgeTree : Flare -> Tree Wedge
@@ -446,7 +446,7 @@ flareToWedgeTree (Flare flare) =
                 (Flare f) :: fs ->
                     let
                         ( fsZipper, fsSize ) =
-                            (addChildren depth fs zipper)
+                            addChildren depth fs zipper
 
                         ( fZipper, fSize ) =
                             addChild depth f fsZipper
@@ -454,12 +454,12 @@ flareToWedgeTree (Flare flare) =
                         totalSize =
                             fSize + fsSize
                     in
-                        ( fZipper |> TeaTree.updateFocusDatum (setWedgeSize totalSize), totalSize )
+                    ( fZipper |> TeaTree.updateFocusDatum (setWedgeSize totalSize), totalSize )
 
         addChild depth flare zipper =
             let
                 node =
-                    (makeNode (depth + 1) flare)
+                    makeNode (depth + 1) flare
 
                 emptyChild =
                     TeaTree.insertChild node zipper
@@ -470,22 +470,22 @@ flareToWedgeTree (Flare flare) =
                     emptyChild
                         |> addChildren (depth + 1) flare.children
             in
-                ( completeChild
-                    |> TeaTree.goUp
-                    |> Maybe.withDefault zipper
-                    |> TeaTree.updateFocusDatum (setWedgeSize (node.size + childSize))
-                , childSize
-                )
+            ( completeChild
+                |> TeaTree.goUp
+                |> Maybe.withDefault zipper
+                |> TeaTree.updateFocusDatum (setWedgeSize (node.size + childSize))
+            , childSize
+            )
 
         walk flare =
             let
                 ( zipper, size ) =
                     addChildren 0 flare.children (TeaTree.singleton (makeNode 0 flare))
             in
-                zipper |> TeaTree.goToRoot
+            zipper |> TeaTree.goToRoot
     in
-        walk flare
-            |> TeaTree.toTree
+    walk flare
+        |> TeaTree.toTree
 
 
 
