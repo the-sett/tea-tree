@@ -1,36 +1,18 @@
-module TeaTree
-    exposing
-        ( Tree
-        , Zipper
-        , Path
-          -- Tree operations
-        , singleton
-        , zipper
-        , toTree
-        , map
-          -- Zipper operations
-        , goToChild
-        , goToRightMostChild
-        , goUp
-        , goLeft
-        , goRight
-        , goToRoot
-        , goToNext
-        , goToPrevious
-        , goTo
-        , updateFocusDatum
-        , datum
-        , depth
-        , insertChild
-        , appendChild
-          --, updateChildren
-        , getPath
-          -- Path operations
-        , goToPath
-        , updateDatum
-          -- Sorting
-        , sortBy
-        )
+module TeaTree exposing
+    ( Tree, Zipper, Path
+    , singleton, zipper, map
+    , goToChild, goToRightMostChild, goUp, goLeft, goRight, goToRoot, goToNext, goToPrevious, goTo, updateFocusDatum, datum, insertChild, appendChild, getPath
+    , goToPath, updateDatum
+    , sortBy
+    ,  depth
+      , toTree
+        -- Tree operations
+        --, updateChildren
+        -- Path operations
+        -- Zipper operations
+        -- Sorting
+
+    )
 
 {-| Todo:
 It will be a multiway Tree implementation, not a binary tree.
@@ -139,13 +121,13 @@ getNextId id =
 
 {-| -}
 singleton : a -> Zipper a
-singleton datum =
+singleton val =
     Tree
         { nextId = 1
         , innerTree =
             InnerTree
                 { id = 0
-                , datum = datum
+                , datum = val
                 , children = []
                 }
         }
@@ -169,10 +151,10 @@ zipper (Tree tree) =
 
 {-| -}
 toTree : Zipper a -> Tree a
-toTree (Zipper zipper) =
+toTree (Zipper zip) =
     Tree
-        { nextId = zipper.nextId
-        , innerTree = zipper.innerTree
+        { nextId = zip.nextId
+        , innerTree = zip.innerTree
         }
 
 
@@ -185,12 +167,11 @@ mapInner fn (InnerTree tree) =
         mappedChildren =
             List.map (\child -> mapInner fn child) tree.children
     in
-        (InnerTree
-            { id = tree.id
-            , datum = mappedDatum
-            , children = mappedChildren
-            }
-        )
+    InnerTree
+        { id = tree.id
+        , datum = mappedDatum
+        , children = mappedChildren
+        }
 
 
 {-| -}
@@ -200,29 +181,28 @@ map fn (Tree tree) =
         mappedInner =
             mapInner fn tree.innerTree
     in
-        (Tree
-            { nextId = tree.nextId
-            , innerTree = mappedInner
-            }
-        )
+    Tree
+        { nextId = tree.nextId
+        , innerTree = mappedInner
+        }
 
 
-mkNode datum id =
+mkNode val id =
     InnerTree
         { id = id
-        , datum = datum
+        , datum = val
         , children = []
         }
 
 
 insertNodeToTree : a -> Id -> InnerTree a -> InnerTree a
-insertNodeToTree childDatum childId (InnerTree { id, datum, children }) =
-    InnerTree { id = id, datum = datum, children = (mkNode childDatum childId) :: children }
+insertNodeToTree childDatum childId (InnerTree inner) =
+    InnerTree { id = inner.id, datum = inner.datum, children = mkNode childDatum childId :: inner.children }
 
 
 appendNodeToTree : a -> Id -> InnerTree a -> InnerTree a
-appendNodeToTree childDatum childId (InnerTree { id, datum, children }) =
-    InnerTree { id = id, datum = datum, children = children ++ [ (mkNode childDatum childId) ] }
+appendNodeToTree childDatum childId (InnerTree inner) =
+    InnerTree { id = inner.id, datum = inner.datum, children = inner.children ++ [ mkNode childDatum childId ] }
 
 
 {-| This operation may be faster than `map` when the type of the tree does not change.
@@ -252,12 +232,12 @@ splitOnIndex n xs =
         -- The above seems inneficient unless the compiler is very smart,
         -- better to write our own loop to iterate the list just once.
     in
-        case focus of
-            Nothing ->
-                Nothing
+    case focus of
+        Nothing ->
+            Nothing
 
-            Just f ->
-                Just ( before, f, after )
+        Just f ->
+            Just ( before, f, after )
 
 
 {-| Walking the zipper context back to the root will produce a Tree with any
@@ -265,80 +245,80 @@ updates made as the zipper was walked over the tree, folded back in to the
 new Tree.
 -}
 goToRoot : Zipper a -> Zipper a
-goToRoot (Zipper zipper) =
-    case zipper.crumbs of
+goToRoot (Zipper zip) =
+    case zip.crumbs of
         [] ->
-            Zipper zipper
+            Zipper zip
 
         otherwise ->
-            goUp (Zipper zipper)
+            goUp (Zipper zip)
                 |> Maybe.map goToRoot
-                |> Maybe.withDefault (Zipper zipper)
+                |> Maybe.withDefault (Zipper zip)
 
 
 {-| -}
 goToChild : Int -> Zipper a -> Maybe (Zipper a)
-goToChild n (Zipper zipper) =
+goToChild n (Zipper zip) =
     let
         (InnerTree inner) =
-            zipper.innerTree
+            zip.innerTree
 
         maybeSplit =
             splitOnIndex n inner.children
     in
-        case maybeSplit of
-            Nothing ->
-                Nothing
+    case maybeSplit of
+        Nothing ->
+            Nothing
 
-            Just ( before, focus, after ) ->
-                let
-                    (InnerTree innerFocus) =
-                        focus
-                in
-                    Just
-                        (Zipper
-                            { nextId = zipper.nextId
-                            , currentPath =
-                                case zipper.currentPath of
-                                    Path _ ps ->
-                                        Path innerFocus.id (n :: ps)
-                            , innerTree = focus
-                            , crumbs =
-                                { id = inner.id
-                                , datum = inner.datum
-                                , before = before
-                                , after = after
-                                }
-                                    :: zipper.crumbs
-                            , depth = zipper.depth + 1
-                            }
-                        )
+        Just ( before, focus, after ) ->
+            let
+                (InnerTree innerFocus) =
+                    focus
+            in
+            Just
+                (Zipper
+                    { nextId = zip.nextId
+                    , currentPath =
+                        case zip.currentPath of
+                            Path _ ps ->
+                                Path innerFocus.id (n :: ps)
+                    , innerTree = focus
+                    , crumbs =
+                        { id = inner.id
+                        , datum = inner.datum
+                        , before = before
+                        , after = after
+                        }
+                            :: zip.crumbs
+                    , depth = zip.depth + 1
+                    }
+                )
 
 
 {-| -}
 goUp : Zipper a -> Maybe (Zipper a)
-goUp (Zipper zipper) =
-    case zipper.crumbs of
-        { id, datum, before, after } :: bs ->
+goUp (Zipper zip) =
+    case zip.crumbs of
+        crumb :: bs ->
             Just
                 (Zipper
-                    { nextId = zipper.nextId
+                    { nextId = zip.nextId
                     , currentPath =
-                        case zipper.currentPath of
+                        case zip.currentPath of
                             Path _ (_ :: ps) ->
-                                Path id ps
+                                Path crumb.id ps
 
                             _ ->
                                 -- This branch should never happen.
                                 Path -1 []
                     , innerTree =
                         InnerTree
-                            { id = id
-                            , datum = datum
-                            , children = (before ++ [ zipper.innerTree ] ++ after)
+                            { id = crumb.id
+                            , datum = crumb.datum
+                            , children = crumb.before ++ [ zip.innerTree ] ++ crumb.after
                             }
                     , crumbs = bs
-                    , depth = zipper.depth - 1
+                    , depth = zip.depth - 1
                     }
                 )
 
@@ -348,19 +328,19 @@ goUp (Zipper zipper) =
 
 {-| -}
 goLeft : Zipper a -> Maybe (Zipper a)
-goLeft (Zipper zipper) =
-    case zipper.crumbs of
-        { id, datum, before, after } :: bs ->
-            case List.reverse before of
+goLeft (Zipper zip) =
+    case zip.crumbs of
+        crumb :: bs ->
+            case List.reverse crumb.before of
                 [] ->
                     Nothing
 
                 (InnerTree inner) :: rest ->
                     Just
                         (Zipper
-                            { nextId = zipper.nextId
+                            { nextId = zip.nextId
                             , currentPath =
-                                case zipper.currentPath of
+                                case zip.currentPath of
                                     Path _ (p :: ps) ->
                                         Path inner.id (p - 1 :: ps)
 
@@ -369,13 +349,13 @@ goLeft (Zipper zipper) =
                                         Path -1 []
                             , innerTree = InnerTree inner
                             , crumbs =
-                                { id = id
-                                , datum = datum
+                                { id = crumb.id
+                                , datum = crumb.datum
                                 , before = List.reverse rest
-                                , after = zipper.innerTree :: after
+                                , after = zip.innerTree :: crumb.after
                                 }
                                     :: bs
-                            , depth = zipper.depth
+                            , depth = zip.depth
                             }
                         )
 
@@ -385,19 +365,19 @@ goLeft (Zipper zipper) =
 
 {-| -}
 goRight : Zipper a -> Maybe (Zipper a)
-goRight (Zipper zipper) =
-    case zipper.crumbs of
-        { id, datum, before, after } :: bs ->
-            case after of
+goRight (Zipper zip) =
+    case zip.crumbs of
+        crumb :: bs ->
+            case crumb.after of
                 [] ->
                     Nothing
 
                 (InnerTree inner) :: rest ->
                     Just
                         (Zipper
-                            { nextId = zipper.nextId
+                            { nextId = zip.nextId
                             , currentPath =
-                                case zipper.currentPath of
+                                case zip.currentPath of
                                     Path _ (p :: ps) ->
                                         Path inner.id (p + 1 :: ps)
 
@@ -406,13 +386,13 @@ goRight (Zipper zipper) =
                                         Path -1 []
                             , innerTree = InnerTree inner
                             , crumbs =
-                                { id = id
-                                , datum = datum
-                                , before = before ++ [ zipper.innerTree ]
+                                { id = crumb.id
+                                , datum = crumb.datum
+                                , before = crumb.before ++ [ zip.innerTree ]
                                 , after = rest
                                 }
                                     :: bs
-                            , depth = zipper.depth
+                            , depth = zip.depth
                             }
                         )
 
@@ -422,151 +402,152 @@ goRight (Zipper zipper) =
 
 {-| -}
 goToNext : Zipper a -> Maybe (Zipper a)
-goToNext zipper =
+goToNext zip =
     let
-        upAndOver zipper =
-            case goUp zipper of
+        upAndOver uoZip =
+            case goUp uoZip of
                 Nothing ->
                     Nothing
 
-                Just zipper_ ->
-                    case goRight zipper_ of
+                Just zip_ ->
+                    case goRight zip_ of
                         Nothing ->
-                            upAndOver zipper_
+                            upAndOver zip_
 
-                        zipper__ ->
-                            zipper__
+                        zip__ ->
+                            zip__
     in
-        case goToChild 0 zipper of
-            Just zipper_ ->
-                Just zipper_
+    case goToChild 0 zip of
+        Just zip_ ->
+            Just zip_
 
-            Nothing ->
-                case goRight zipper of
-                    Just zipper_ ->
-                        Just zipper_
+        Nothing ->
+            case goRight zip of
+                Just zip_ ->
+                    Just zip_
 
-                    Nothing ->
-                        case upAndOver zipper of
-                            Nothing ->
-                                Nothing
+                Nothing ->
+                    case upAndOver zip of
+                        Nothing ->
+                            Nothing
 
-                            zipper_ ->
-                                zipper_
+                        zip_ ->
+                            zip_
 
 
 {-| -}
 goToPrevious : Zipper a -> Maybe (Zipper a)
-goToPrevious zipper =
+goToPrevious zip =
     let
-        recurseDownAndRight zipper_ =
-            case goToRightMostChild zipper_ of
-                Just zipper__ ->
-                    recurseDownAndRight zipper__
+        recurseDownAndRight zip_ =
+            case goToRightMostChild zip_ of
+                Just zip__ ->
+                    recurseDownAndRight zip__
 
                 Nothing ->
-                    Just zipper_
+                    Just zip_
     in
-        case goLeft zipper of
-            Just zipper_ ->
-                recurseDownAndRight zipper_
+    case goLeft zip of
+        Just zip_ ->
+            recurseDownAndRight zip_
 
-            Nothing ->
-                goUp zipper
+        Nothing ->
+            goUp zip
 
 
 {-| -}
 goToRightMostChild : Zipper a -> Maybe (Zipper a)
-goToRightMostChild (Zipper zipper) =
+goToRightMostChild (Zipper zip) =
     let
         (InnerTree inner) =
-            zipper.innerTree
+            zip.innerTree
     in
-        goToChild ((List.length inner.children) - 1) (Zipper zipper)
+    goToChild (List.length inner.children - 1) (Zipper zip)
 
 
 {-| -}
 goTo : (a -> Bool) -> Zipper a -> Maybe (Zipper a)
-goTo predicate zipper =
+goTo predicate zip =
     let
-        goToElementOrNext zipper_ =
-            if predicate (datum zipper) then
-                Just zipper_
+        goToElementOrNext zip_ =
+            if predicate (datum zip) then
+                Just zip_
+
             else
-                goToNext zipper_ |> Maybe.andThen goToElementOrNext
+                goToNext zip_ |> Maybe.andThen goToElementOrNext
     in
-        (goToRoot zipper) |> goToElementOrNext
+    goToRoot zip |> goToElementOrNext
 
 
 {-| -}
 datum : Zipper a -> a
-datum (Zipper zipper) =
+datum (Zipper zip) =
     let
         (InnerTree inner) =
-            zipper.innerTree
+            zip.innerTree
     in
-        inner.datum
+    inner.datum
 
 
 {-| -}
 depth : Zipper a -> Int
-depth (Zipper zipper) =
-    zipper.depth
+depth (Zipper zip) =
+    zip.depth
 
 
 {-| -}
 updateFocusDatum : (a -> a) -> Zipper a -> Zipper a
-updateFocusDatum fn (Zipper zipper) =
+updateFocusDatum fn (Zipper zip) =
     let
         (InnerTree inner) =
-            zipper.innerTree
+            zip.innerTree
     in
-        Zipper
-            { zipper
-                | innerTree = InnerTree { inner | datum = (fn inner.datum) }
-            }
+    Zipper
+        { zip
+            | innerTree = InnerTree { inner | datum = fn inner.datum }
+        }
 
 
 {-| -}
 insertChild : a -> Zipper a -> Zipper a
-insertChild child (Zipper { nextId, currentPath, innerTree, crumbs, depth }) =
+insertChild child (Zipper zip) =
     let
         steppedId =
-            nextId + 1
+            zip.nextId + 1
     in
-        Zipper
-            { nextId = steppedId
-            , currentPath = currentPath
-            , innerTree = insertNodeToTree child nextId innerTree
-            , crumbs = crumbs
-            , depth = depth
-            }
+    Zipper
+        { nextId = steppedId
+        , currentPath = zip.currentPath
+        , innerTree = insertNodeToTree child zip.nextId zip.innerTree
+        , crumbs = zip.crumbs
+        , depth = zip.depth
+        }
 
 
 {-| -}
 appendChild : a -> Zipper a -> Zipper a
-appendChild child (Zipper { nextId, currentPath, innerTree, crumbs, depth }) =
+appendChild child (Zipper zip) =
     let
         steppedId =
-            nextId + 1
+            zip.nextId + 1
     in
-        Zipper
-            { nextId = steppedId
-            , currentPath = currentPath
-            , innerTree = appendNodeToTree child nextId innerTree
-            , crumbs = crumbs
-            , depth = depth
-            }
+    Zipper
+        { nextId = steppedId
+        , currentPath = zip.currentPath
+        , innerTree = appendNodeToTree child zip.nextId zip.innerTree
+        , crumbs = zip.crumbs
+        , depth = zip.depth
+        }
 
 
 {-| -}
 getPath : Zipper a -> Path
-getPath (Zipper zipper) =
+getPath (Zipper zip) =
     let
         (Path id steps) =
-            zipper.currentPath
+            zip.currentPath
     in
-        Path id <| List.reverse steps
+    Path id <| List.reverse steps
 
 
 
@@ -589,31 +570,31 @@ a user is interacting with a tree.
 goToPath : Path -> Tree a -> Maybe (Zipper a)
 goToPath path tree =
     let
-        (Path _ steps) =
+        (Path _ pathSteps) =
             path
 
         walk : List Int -> Maybe (Zipper a) -> Maybe (Zipper a)
-        walk steps zipper =
-            case ( steps, zipper ) of
-                ( [], Just zipper_ ) ->
-                    zipper
+        walk steps zip =
+            case ( steps, zip ) of
+                ( [], Just zip_ ) ->
+                    zip
 
-                ( n :: ns, Just zipper_ ) ->
+                ( n :: ns, Just zip_ ) ->
                     let
                         maybeChildZipper =
-                            goToChild n zipper_
+                            goToChild n zip_
                     in
-                        case maybeChildZipper of
-                            Nothing ->
-                                Nothing
+                    case maybeChildZipper of
+                        Nothing ->
+                            Nothing
 
-                            Just zipper__ ->
-                                walk ns (Just zipper__)
+                        Just zip__ ->
+                            walk ns (Just zip__)
 
                 ( _, Nothing ) ->
                     Nothing
     in
-        walk steps (zipper tree |> Just)
+    walk pathSteps (zipper tree |> Just)
 
 
 {-| The contents of nodes in the tree will be held in an `Array Id a`. Ids will be assigned
@@ -635,19 +616,19 @@ updateDatum path fn tree =
 sortBy : (a -> comparable) -> Tree a -> Tree a
 sortBy sortFn (Tree tree) =
     let
-        innerSortBy sortFn (InnerTree innerTree) =
+        innerSortBy (InnerTree innerTree) =
             InnerTree
                 { id = innerTree.id
                 , datum = innerTree.datum
                 , children =
-                    List.map (innerSortBy sortFn) innerTree.children
+                    List.map innerSortBy innerTree.children
                         |> List.sortBy (\(InnerTree node) -> sortFn node.datum)
                 }
     in
-        Tree
-            { nextId = tree.nextId
-            , innerTree = innerSortBy sortFn tree.innerTree
-            }
+    Tree
+        { nextId = tree.nextId
+        , innerTree = innerSortBy tree.innerTree
+        }
 
 
 
