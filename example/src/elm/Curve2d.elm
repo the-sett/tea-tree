@@ -83,8 +83,12 @@ curve2d attributes curve =
         convertSegment segment =
             case segment of
                 ArcSegment arc ->
-                    Segment.Arc
-                        { arcFlag =
+                    Segment.ellipticalArc
+                        (Arc2d.startPoint arc |> Point2d.coordinates)
+                        { target = Arc2d.endPoint arc |> Point2d.coordinates
+                        , radii = ( Arc2d.radius arc, Arc2d.radius arc )
+                        , xAxisRotate = 0.0
+                        , arcFlag =
                             if Arc2d.sweptAngle arc > pi || Arc2d.sweptAngle arc < -pi then
                                 LowLevel.Command.largestArc
 
@@ -96,15 +100,11 @@ curve2d attributes curve =
 
                             else
                                 LowLevel.Command.clockwise
-                        , start = Arc2d.startPoint arc |> pointToVec
-                        , end = Arc2d.endPoint arc |> pointToVec
-                        , radii = ( Arc2d.radius arc, Arc2d.radius arc )
-                        , xAxisRotate = 0.0
                         }
 
                 LineSegment line ->
-                    Segment.LineSegment (LineSegment2d.startPoint line |> pointToVec)
-                        (LineSegment2d.endPoint line |> pointToVec)
+                    Segment.line (LineSegment2d.startPoint line |> Point2d.coordinates)
+                        (LineSegment2d.endPoint line |> Point2d.coordinates)
 
         startPoint segments =
             case segments of
