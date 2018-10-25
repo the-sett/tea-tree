@@ -1,6 +1,5 @@
 module Main exposing (Flare(..), Model(..), Msg(..), ReadyModel, SizingWindowModel, Wedge, background, black, diagram, fetchExample, flareDecoder, flareToWedgeTree, fullView, highlightWedge, init, initLayoutTree, main, maybeEmptyList, midGray, noop, normalWedge, offWhite, printGray, strongPrintGray, subscriptions, treeDecoder, update, view, wedge, wheel, white, windowSizeToFrame)
 
-import AnimationFrame
 import Arc2d exposing (Arc2d)
 import Color exposing (Color)
 import Curve2d exposing (Curve2d)
@@ -26,7 +25,6 @@ import TypedSvg.Events
 import TypedSvg.Types exposing (Align(..), AnchorAlignment(..), Fill(..), MeetOrSlice(..), Opacity(..), Scale(..), ShapeRendering(..), StrokeLinecap(..), StrokeLinejoin(..), TextRendering(..), Transform(..), px)
 import Utils.GridMetrics exposing (Frame, Sized, middle, rectToFrame)
 import Vector2d exposing (Vector2d)
-import Window
 
 
 main =

@@ -1,34 +1,39 @@
 {
     "type": "application",
     "source-directories": [
-        ".",
+        "src/elm",
         "../src/"
     ],
     "elm-version": "0.19.0",
     "dependencies": {
         "direct": {
+            "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.0",
             "elm/core": "1.0.0",
+            "elm/html": "1.0.0",
             "elm/http": "1.0.0",
+            "elm/json": "1.0.0",
             "elm/svg": "1.0.0",
             "elm-community/easing-functions": "2.0.0",
             "elm-community/json-extra": "4.0.0",
             "elm-community/typed-svg": "3.1.0",
-            "ianmackenzie/elm-geometry": "1.1.0",
-            "ianmackenzie/elm-geometry-svg": "1.0.1",
+            "folkertdev/one-true-path-experiment": "4.0.1",
+            "ianmackenzie/elm-geometry": "1.2.1",
+            "ianmackenzie/elm-geometry-svg": "1.0.2",
             "the-sett/svg-text-fonts": "3.0.0"
         },
         "indirect": {
-            "elm/html": "1.0.0",
-            "elm/json": "1.0.0",
-            "elm/parser": "1.0.0",
+            "elm/parser": "1.1.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.0",
+            "elm/virtual-dom": "1.0.2",
+            "elm-community/list-extra": "8.1.0",
+            "folkertdev/elm-deque": "3.0.0",
+            "folkertdev/svg-path-lowlevel": "3.0.0",
             "ianmackenzie/elm-float-extra": "1.0.1",
             "ianmackenzie/elm-interval": "1.0.1",
             "ianmackenzie/elm-triangular-mesh": "1.0.2",
-            "rtfeldman/elm-iso8601-date-strings": "1.0.0",
+            "rtfeldman/elm-iso8601-date-strings": "1.1.2",
             "the-sett/elm-one-many": "1.1.0",
             "truqu/elm-dictset": "2.0.0",
             "turboMaCk/any-dict": "1.0.1"

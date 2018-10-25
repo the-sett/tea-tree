@@ -1,10 +1,10 @@
 {
-  "name": "stackwhack-ui",
+  "name": "tea-tree-example",
   "version": "0.0.1",
-  "description": "UI for StackWhack data models.",
+  "description": "UI for testing tea-tree.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rupertlssmith/stackwhack-ui"
+    "url": "https://github.com/the-sett/tea-tree"
   },
   "scripts": {
     "start": "webpack-dev-server --hot",

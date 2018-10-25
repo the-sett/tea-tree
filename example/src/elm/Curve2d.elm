@@ -1,4 +1,15 @@
-module Curve2d exposing (Curve2d, Segment(..), addArc, addArcs, addLineSegment, addLineSegments, curve2d, fromArc, fromLineSegment, pointToVec)
+module Curve2d exposing
+    ( Curve2d
+    , Segment(..)
+    , addArc
+    , addArcs
+    , addLineSegment
+    , addLineSegments
+    , curve2d
+    , fromArc
+    , fromLineSegment
+    , pointToVec
+    )
 
 import Arc2d exposing (Arc2d)
 import LineSegment2d exposing (LineSegment2d)
@@ -8,7 +19,7 @@ import Point2d
 import Segment
 import SubPath
 import Svg exposing (Attribute, Svg)
-import Vector2
+import Vector2d
 
 
 type alias Curve2d =
