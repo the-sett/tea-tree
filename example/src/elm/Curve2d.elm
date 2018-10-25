@@ -71,9 +71,10 @@ addLineSegments lines curve =
             LineSegment l :: addLineSegments ls curve
 
 
-pointToVec : Point2d.Point2d -> Vector2.Vec2 Float
+pointToVec : Point2d.Point2d -> Vector2d.Vector2d
 pointToVec point =
     Point2d.coordinates point
+        |> Vector2d.fromComponents
 
 
 curve2d : List (Attribute msg) -> Curve2d -> Svg msg
@@ -105,23 +106,23 @@ curve2d attributes curve =
                     Segment.LineSegment (LineSegment2d.startPoint line |> pointToVec)
                         (LineSegment2d.endPoint line |> pointToVec)
 
-        startPoint curve =
-            case curve of
+        startPoint segments =
+            case segments of
                 [] ->
                     ( 0.0, 0.0 )
 
                 c :: cs ->
                     case c of
                         ArcSegment arc ->
-                            Arc2d.startPoint arc |> pointToVec
+                            Arc2d.startPoint arc |> Point2d.coordinates
 
                         LineSegment line ->
-                            LineSegment2d.startPoint line |> pointToVec
+                            LineSegment2d.startPoint line |> Point2d.coordinates
     in
     (curve
         |> List.map convertSegment
         |> List.map Segment.toDrawTo
-        |> SubPath.subpath (LowLevel.Command.moveTo <| startPoint curve)
+        |> SubPath.with (LowLevel.Command.moveTo <| startPoint curve)
         |> SubPath.element
     )
         attributes
