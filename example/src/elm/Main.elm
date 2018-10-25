@@ -414,9 +414,9 @@ flareDecoder =
                 , size = size
                 }
         )
-        |> andMap Decode.field "name" Decode.string
-        |> andMap Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder)))))
-        |> andMap Decode.maybe (Decode.field "size" Decode.int)
+        |> andMap (Decode.field "name" Decode.string)
+        |> andMap (Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder))))))
+        |> andMap (Decode.maybe (Decode.field "size" Decode.int))
 
 
 initLayoutTree : Tree Wedge -> Tree Wedge
