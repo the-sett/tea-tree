@@ -1,4 +1,37 @@
-module Main exposing (Flare(..), Model(..), Msg(..), ReadyModel, SizingWindowModel, Wedge, background, black, diagram, fetchExample, flareDecoder, flareToWedgeTree, fullView, highlightWedge, init, initLayoutTree, main, maybeEmptyList, midGray, noop, normalWedge, offWhite, printGray, strongPrintGray, subscriptions, treeDecoder, update, view, wedge, wheel, white, windowSizeToFrame)
+module Main exposing
+    ( Flare(..)
+    , Model(..)
+    , Msg(..)
+    , ReadyModel
+    , SizingWindowModel
+    , Wedge
+    , background
+    , black
+    , diagram
+    , fetchExample
+    , flareDecoder
+    , flareToWedgeTree
+    , fullView
+    , highlightWedge
+    , init
+    , initLayoutTree
+    , main
+    , maybeEmptyList
+    , midGray
+    , noop
+    , normalWedge
+    , offWhite
+    , printGray
+    , strongPrintGray
+    , subscriptions
+    , treeDecoder
+    , update
+    , view
+    , wedge
+    , wheel
+    , white
+    , windowSizeToFrame
+    )
 
 import Arc2d exposing (Arc2d)
 import Color exposing (Color)
@@ -18,11 +51,42 @@ import Task exposing (Task, perform)
 import TeaTree exposing (Tree, Zipper)
 import TextToSVG exposing (TextAlignment(..), TextRenderFunc, textAsPath, textAsText)
 import TypedSvg exposing (circle, g, line, path, rect, svg, text_, tspan)
-import TypedSvg.Attributes exposing (color, d, fill, fillOpacity, fontFamily, preserveAspectRatio, shapeRendering, stroke, strokeDasharray, strokeLinecap, strokeLinejoin, textAnchor, textRendering, transform, viewBox)
+import TypedSvg.Attributes
+    exposing
+        ( color
+        , d
+        , fill
+        , fillOpacity
+        , fontFamily
+        , preserveAspectRatio
+        , shapeRendering
+        , stroke
+        , strokeDasharray
+        , strokeLinecap
+        , strokeLinejoin
+        , textAnchor
+        , textRendering
+        , transform
+        , viewBox
+        )
 import TypedSvg.Attributes.InPx exposing (cx, cy, fontSize, height, r, rx, ry, strokeWidth, width, x, x1, x2, y, y1, y2)
 import TypedSvg.Core exposing (Svg, svgNamespace, text)
 import TypedSvg.Events
-import TypedSvg.Types exposing (Align(..), AnchorAlignment(..), Fill(..), MeetOrSlice(..), Opacity(..), Scale(..), ShapeRendering(..), StrokeLinecap(..), StrokeLinejoin(..), TextRendering(..), Transform(..), px)
+import TypedSvg.Types
+    exposing
+        ( Align(..)
+        , AnchorAlignment(..)
+        , Fill(..)
+        , MeetOrSlice(..)
+        , Opacity(..)
+        , Scale(..)
+        , ShapeRendering(..)
+        , StrokeLinecap(..)
+        , StrokeLinejoin(..)
+        , TextRendering(..)
+        , Transform(..)
+        , px
+        )
 import Utils.GridMetrics exposing (Frame, Sized, middle, rectToFrame)
 import Vector2d exposing (Vector2d)
 
