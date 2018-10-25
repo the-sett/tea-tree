@@ -34,6 +34,9 @@ module Main exposing
     )
 
 import Arc2d exposing (Arc2d)
+import Browser
+import Browser.Dom exposing (Viewport, getViewport)
+import Browser.Events exposing (onResize)
 import Color exposing (Color)
 import Curve2d exposing (Curve2d)
 import Ease
@@ -43,7 +46,7 @@ import Html.Attributes
 import Html.Lazy
 import Http
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Extra exposing ((|:), withDefault)
+import Json.Decode.Extra exposing (andMap, withDefault)
 import LineSegment2d exposing (LineSegment2d)
 import Point2d exposing (Point2d)
 import Ports.SVGTextPort exposing (textToSVG, textToSVGResponse)
@@ -87,16 +90,17 @@ import TypedSvg.Types
         , Transform(..)
         , px
         )
-import Utils.GridMetrics exposing (Frame, Sized, middle, rectToFrame)
+import Utils.GridMetrics exposing (Frame, Size, Sized, middle, rectToFrame)
 import Vector2d exposing (Vector2d)
 
 
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
-        , subscriptions = subscriptions
         , update = update
         , view = view
+        , subscriptions = subscriptions
         }
 
 
@@ -134,13 +138,13 @@ type alias Wedge =
 type Msg
     = LoadResult (Result Http.Error (Tree Wedge))
     | TextToSVGMsg TextToSVG.Msg
-    | WindowSize Window.Size
+    | WindowSize Size
     | HoverElement TeaTree.Path
     | LeaveElement TeaTree.Path
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( LoadingModel
     , Task.attempt LoadResult fetchExample
     )
@@ -148,7 +152,7 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Window.resizes WindowSize
+    onResize coordsToSize |> Sub.map WindowSize
 
 
 noop model =
@@ -165,7 +169,7 @@ update action model =
 
                 Ok tree ->
                     ( SizingWindow { tree = tree }
-                    , Task.perform WindowSize Window.size
+                    , Task.perform (viewportToSize >> WindowSize) getViewport
                     )
 
         ( SizingWindow sizingWindowModel, WindowSize windowSize ) ->
@@ -184,14 +188,24 @@ update action model =
             noop model
 
 
-windowSizeToFrame : Window.Size -> Frame
+coordsToSize : Int -> Int -> Size
+coordsToSize x y =
+    { w = toFloat x, h = toFloat y }
+
+
+viewportToSize : Viewport -> Size
+viewportToSize vport =
+    { w = vport.viewport.width, h = vport.viewport.height }
+
+
+windowSizeToFrame : Size -> Frame
 windowSizeToFrame size =
-    { x = 0.0, y = 0.0, w = toFloat size.width, h = toFloat size.height }
+    { x = 0.0, y = 0.0, w = size.w, h = size.h }
         |> rectToFrame
 
 
-highlightWedge wedge =
-    { wedge
+highlightWedge shape =
+    { shape
         | color =
             Color.hsl
                 ((wedge.startAngle + wedge.endAngle) / 2)
@@ -200,8 +214,8 @@ highlightWedge wedge =
     }
 
 
-normalWedge wedge =
-    { wedge
+normalWedge shape =
+    { shape
         | color =
             Color.hsl
                 ((wedge.startAngle + wedge.endAngle) / 2)
@@ -302,10 +316,10 @@ wheel frame tree =
 
 
 wedge : Point2d -> TeaTree.Path -> Wedge -> Svg Msg
-wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as wedge) =
+wedge center path ({ label, size, startAngle, endAngle, innerRadius, outerRadius, color } as shape) =
     let
         -- _ =
-        --     Debug.log "wedge" wedge
+        --     Debug.log "shape" shape
         innerArc =
             Arc2d.with
                 { centerPoint = center
@@ -400,9 +414,9 @@ flareDecoder =
                 , size = size
                 }
         )
-        |: Decode.field "name" Decode.string
-        |: Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder)))))
-        |: Decode.maybe (Decode.field "size" Decode.int)
+        |> andMap Decode.field "name" Decode.string
+        |> andMap Decode.map maybeEmptyList (Decode.maybe (Decode.field "children" (Decode.list (Decode.lazy (\_ -> flareDecoder)))))
+        |> andMap Decode.maybe (Decode.field "size" Decode.int)
 
 
 initLayoutTree : Tree Wedge -> Tree Wedge
@@ -411,16 +425,16 @@ initLayoutTree tree =
         size =
             TeaTree.zipper tree |> TeaTree.datum |> .size
 
-        popN n l =
-            case n of
+        popN levels l =
+            case levels of
                 0 ->
                     ( List.head l |> Maybe.withDefault 0.0, List.tail l |> Maybe.withDefault [] )
 
                 n ->
                     popN (n - 1) (List.tail l |> Maybe.withDefault [])
 
-        layoutWedge accum fraction wedge =
-            { wedge
+        layoutWedge accum fraction shape =
+            { shape
                 | fraction = fraction
                 , startAngle = accum * 2 * pi
                 , endAngle = (accum + fraction) * 2 * pi
@@ -433,16 +447,16 @@ initLayoutTree tree =
                         (toFloat wedge.depth * 0.02 + 0.7)
             }
 
-        initFn accum starts depth zipper =
+        initFn accum starts zipper =
             let
                 depth =
                     TeaTree.depth zipper
 
-                wedge =
+                shape =
                     TeaTree.datum zipper
 
                 fraction =
-                    wedge.size / size
+                    shape.size / size
 
                 wedgeZipper =
                     zipper
@@ -477,13 +491,13 @@ initLayoutTree tree =
                 Nothing ->
                     wedgeZipper
     in
-    initFn 0 [] 0 (TeaTree.zipper tree)
+    initFn 0 [] (TeaTree.zipper tree)
         |> TeaTree.goToRoot
         |> TeaTree.toTree
 
 
 flareToWedgeTree : Flare -> Tree Wedge
-flareToWedgeTree (Flare flare) =
+flareToWedgeTree (Flare flr) =
     let
         makeNode depth flare =
             { label = flare.name
@@ -497,8 +511,8 @@ flareToWedgeTree (Flare flare) =
             , color = Color.rgba 200 120 80 0.6
             }
 
-        setWedgeSize size wedge =
-            { wedge | size = size }
+        setWedgeSize size shape =
+            { shape | size = size }
 
         addChildren depth flares zipper =
             case flares of
@@ -546,7 +560,7 @@ flareToWedgeTree (Flare flare) =
             in
             zipper |> TeaTree.goToRoot
     in
-    walk flare
+    walk flr
         |> TeaTree.toTree
 
 
