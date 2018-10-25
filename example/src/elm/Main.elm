@@ -1,37 +1,4 @@
-module Main exposing
-    ( Flare(..)
-    , Model(..)
-    , Msg(..)
-    , ReadyModel
-    , SizingWindowModel
-    , Wedge
-    , background
-    , black
-    , diagram
-    , fetchExample
-    , flareDecoder
-    , flareToWedgeTree
-    , fullView
-    , highlightWedge
-    , init
-    , initLayoutTree
-    , main
-    , maybeEmptyList
-    , midGray
-    , noop
-    , normalWedge
-    , offWhite
-    , printGray
-    , strongPrintGray
-    , subscriptions
-    , treeDecoder
-    , update
-    , view
-    , wedge
-    , wheel
-    , white
-    , windowSizeToFrame
-    )
+module Main exposing (main)
 
 import Arc2d exposing (Arc2d)
 import Browser
@@ -208,9 +175,9 @@ highlightWedge shape =
     { shape
         | color =
             Color.hsl
-                ((wedge.startAngle + wedge.endAngle) / 2)
-                (toFloat wedge.depth * 0.05 + 0.75)
-                (toFloat wedge.depth * 0.02 + 0.65)
+                ((shape.startAngle + shape.endAngle) / 2)
+                (toFloat shape.depth * 0.05 + 0.75)
+                (toFloat shape.depth * 0.02 + 0.65)
     }
 
 
@@ -218,9 +185,9 @@ normalWedge shape =
     { shape
         | color =
             Color.hsl
-                ((wedge.startAngle + wedge.endAngle) / 2)
-                (toFloat wedge.depth * 0.05 + 0.7)
-                (toFloat wedge.depth * 0.02 + 0.7)
+                ((shape.startAngle + shape.endAngle) / 2)
+                (toFloat shape.depth * 0.05 + 0.7)
+                (toFloat shape.depth * 0.02 + 0.7)
     }
 
 
@@ -252,18 +219,31 @@ printGray =
     Color.rgb 48 48 48
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
+    { title = "Tea Tree Example"
+    , body = [ body model ]
+    }
+
+
+body : Model -> Html Msg
+body model =
     Html.div []
-        [ Html.Lazy.lazy fullView model
+        [ Html.Lazy.lazy fullBody model
         ]
 
 
-fullView : Model -> Html Msg
-fullView model =
+fullBody : Model -> Html Msg
+fullBody model =
     case model of
         Ready ready ->
-            diagram ready
+            Html.div
+                [ Html.Attributes.style "width" "100%"
+                , Html.Attributes.style "height" "100%"
+                , Html.Attributes.style "overflow" "hidden"
+                ]
+                [ diagram ready
+                ]
 
         _ ->
             Html.div [] []
@@ -438,13 +418,13 @@ initLayoutTree tree =
                 | fraction = fraction
                 , startAngle = accum * 2 * pi
                 , endAngle = (accum + fraction) * 2 * pi
-                , innerRadius = wedge.depth * 90 |> toFloat
-                , outerRadius = (wedge.depth + 1) * 90 |> toFloat
+                , innerRadius = shape.depth * 90 |> toFloat
+                , outerRadius = (shape.depth + 1) * 90 |> toFloat
                 , color =
                     Color.hsl
                         ((accum + fraction / 2) * pi * 2)
-                        (toFloat wedge.depth * 0.05 + 0.7)
-                        (toFloat wedge.depth * 0.02 + 0.7)
+                        (toFloat shape.depth * 0.05 + 0.7)
+                        (toFloat shape.depth * 0.02 + 0.7)
             }
 
         initFn accum starts zipper =
@@ -486,7 +466,7 @@ initLayoutTree tree =
                                 ( accum, (accum + fraction) :: starts )
                     in
                     stepZipper
-                        |> initFn nextAccum nextStarts nextDepth
+                        |> initFn nextAccum nextStarts
 
                 Nothing ->
                     wedgeZipper
