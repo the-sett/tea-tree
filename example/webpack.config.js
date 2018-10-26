@@ -40,10 +40,16 @@ const commonConfig = {
 
   module: {
     noParse: /\.elm$/,
-    rules: [
-      {
+    rules: [{
         test: /\.(eot|ttf|woff|woff2|svg)$/,
         use: 'file-loader?publicPath=../../&name=static/css/[hash].[ext]',
+      },
+      {
+        test: /\.(json)$/,
+        loader: 'file-loader',
+        options: {
+          name: '[path][name].[ext]',
+        }
       },
     ]
   },
@@ -73,24 +79,21 @@ if (isDev) {
     ],
 
     module: {
-      rules: [
-        {
-          test: /\.elm$/,
-          exclude: [/elm-stuff/, /node_modules/],
-          use: [
-            {
-              loader: 'elm-hot-webpack-loader'
-            },
-            {
-              loader: 'elm-webpack-loader',
-              options: {
-                verbose: true,
-                debug: false
-              }
+      rules: [{
+        test: /\.elm$/,
+        exclude: [/elm-stuff/, /node_modules/],
+        use: [{
+            loader: 'elm-hot-webpack-loader'
+          },
+          {
+            loader: 'elm-webpack-loader',
+            options: {
+              verbose: true,
+              debug: false
             }
-          ]
-        }
-      ]
+          }
+        ]
+      }]
     },
 
     devServer: {
@@ -110,8 +113,7 @@ if (isProd) {
     entry: entryPath,
 
     module: {
-      rules: [
-        {
+      rules: [{
           test: /\.elm$/,
           exclude: [/elm-stuff/, /node_modules/],
           use: 'elm-webpack-loader'
@@ -132,9 +134,13 @@ if (isProd) {
         allChunks: true
       }),
 
-      new CopyWebpackPlugin([
-        { from: 'src/static/img', to: 'static/img' },
-        { from: 'src/static/favicon.ico' }
+      new CopyWebpackPlugin([{
+          from: 'src/static/img',
+          to: 'static/img'
+        },
+        {
+          from: 'src/static/favicon.ico'
+        }
       ]),
 
       new UglifyJsPlugin(),

@@ -370,7 +370,7 @@ type Flare
 
 fetchExample : Task Http.Error (Tree Wedge)
 fetchExample =
-    Http.get "/flare.json" treeDecoder
+    Http.get "/static/flare.json" treeDecoder
         |> Http.toTask
 
 
