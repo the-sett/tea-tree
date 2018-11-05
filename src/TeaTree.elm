@@ -1,17 +1,10 @@
 module TeaTree exposing
     ( Tree, Zipper, Path
     , singleton, zipper, map
-    , goToChild, goToRightMostChild, goUp, goLeft, goRight, goToRoot, goToNext, goToPrevious, goTo, updateFocusDatum, datum, insertChild, appendChild, getPath
+    , goToChild, goToRightMostChild, goUp, goLeft, goRight, goToRoot, goToNext, goToPrevious
+    , goTo, updateFocusDatum, datum, insertChild, appendChild, getPath, toTree, depth
     , goToPath, updateDatum
     , sortBy
-    ,  depth
-      , toTree
-        -- Tree operations
-        --, updateChildren
-        -- Path operations
-        -- Zipper operations
-        -- Sorting
-
     )
 
 {-| Todo:
@@ -39,7 +32,8 @@ can be made more efficient.
 
 ## Zipper operations
 
-@docs goToChild, goToRightMostChild, goUp, goLeft, goRight, goToRoot, goToNext, goToPrevious, goTo, updateFocusDatum, datum, insertChild, appendChild, getPath
+@docs goToChild, goToRightMostChild, goUp, goLeft, goRight, goToRoot, goToNext, goToPrevious
+@docs goTo, updateFocusDatum, datum, insertChild, appendChild, getPath, toTree, depth
 
 
 ## Path operations
